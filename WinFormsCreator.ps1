@@ -323,7 +323,7 @@ $sbGUI = {
                     $form.Name = $ControlName
                     $form.Location = New-Object System.Drawing.Point(0, 0)
                     $form.Add_FormClosing({
-                            param($Sender, $e)
+                            param($SenderObj, $e)
 
                             $e.Cancel = $true
                         })
@@ -365,7 +365,7 @@ $sbGUI = {
                     # Add the Mouse events to each of the selected object control buttons
                     $sButtons.GetEnumerator().ForEach({
                             $_.Value.Add_MouseMove({
-                                    param($Sender, $e)
+                                    param($SenderObj, $e)
 
                                     try {
                                         $currentMousePOS = [System.Windows.Forms.Cursor]::Position
@@ -377,7 +377,7 @@ $sbGUI = {
 
                                                 $msObj = @{}
 
-                                                switch ($Sender.Name) {
+                                                switch ($SenderObj.Name) {
                                                     btn_SizeAll {
                                                         if (( @('FlowLayoutPanel', 'TableLayoutPanel') -contains $Script:refs['PropertyGrid'].SelectedObject.Parent.GetType().Name ) -or
                                                        ( $Script:refs['PropertyGrid'].SelectedObject.Dock -ne 'None' )) {
@@ -668,7 +668,7 @@ $sbGUI = {
 <SaveFileDialog InitialDirectory="$($BaseDir)\SavedProjects" AddExtension="True" DefaultExt="fbs" Filter="fbs files (*.fbs)|*.fbs" FileName="$($projectName)" OverwritePrompt="True" ValidateNames="True" RestoreDirectory="True" />
 "@
                 $saveDialog.Add_FileOK({
-                        param($Sender, $e)
+                        param($SenderObj, $e)
 
                         if ( $($this.FileName | Split-Path -Leaf) -eq 'NewProject.fbs' ) {
                             [void][System.Windows.Forms.MessageBox]::Show("You cannot save a project with the file name 'NewProject.fbs'", 'Validation Error')
@@ -1546,7 +1546,7 @@ $sbGUI = {
         }
         'PropertyGrid'         = @{
             PropertyValueChanged = {
-                param($Sender, $e)
+                param($SenderObj, $e)
 
                 try {
                     $changedProperty = $e.ChangedItem
@@ -1726,27 +1726,27 @@ $sbGUI = {
         }
         'ChangePanelSize'      = @{
             'MouseMove' = {
-                param($Sender, $e)
+                param($SenderObj, $e)
                 
                 if (( $e.Button -eq 'Left' ) -and ( $e.Location.X -ne 0 )) {
                     # Determine which panel to resize
-                    $side = $Sender.Name -replace "^lbl_"
+                    $side = $SenderObj.Name -replace "^lbl_"
                     # Determine the new X coordinate
                     if ( $side -eq 'Right' ) { $newX = $refs["pnl_$($side)"].Size.Width - $e.Location.X } else { $newX = $refs["pnl_$($side)"].Size.Width + $e.Location.X }
                     # Change the size of the panel
                     if ( $newX -ge 100 ) { $refs["pnl_$($side)"].Size = New-Object System.Drawing.Size($newX, $refs["pnl_$($side)"].Size.Y) }
                     # Refresh form to remove artifacts while dragging
-                    $Sender.Parent.Refresh()
+                    $SenderObj.Parent.Refresh()
                 }
             }
         }
         'CheckedChanged'       = {
-            param ($Sender)
+            param ($SenderObj)
 
-            if ( $Sender.Checked ) {
-                $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Enabled = $true
-                $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Focus()
-            } else { $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Enabled = $false }
+            if ( $SenderObj.Checked ) {
+                $SenderObj.Parent.Controls["$($SenderObj.Name -replace "^c",'t')"].Enabled = $true
+                $SenderObj.Parent.Controls["$($SenderObj.Name -replace "^c",'t')"].Focus()
+            } else { $SenderObj.Parent.Controls["$($SenderObj.Name -replace "^c",'t')"].Enabled = $false }
         }
     }
 
@@ -1867,7 +1867,7 @@ $sbGUI = {
 <OpenFileDialog InitialDirectory="$($Script:projectsDir)" AddExtension="True" DefaultExt="fbs" Filter="fbs files (*.fbs)|*.fbs" FilterIndex="1" ValidateNames="True" CheckFileExists="True" RestoreDirectory="True" />
 "@
                         $openDialog.Add_FileOK({
-                                param($Sender, $e)
+                                param($SenderObj, $e)
 
                                 if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Tag -contains $this.FileName ) {
                                     [void][System.Windows.Forms.MessageBox]::Show("The project '$($this.FileName | Split-Path -Leaf)' has already been added as a child form of this project.", 'Validation Error')
