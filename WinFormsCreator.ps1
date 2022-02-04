@@ -85,6 +85,10 @@ SOFTWARE.
         Fixed issue with Size property on Forms and Textboxes to save correctly
 #>
 
+param(
+    [switch]$ShowConsole
+)
+
 # ScriptBlock to Execute in STA Runspace
 $sbGUI = {
     param($BaseDir)
@@ -2669,16 +2673,18 @@ $cmdGUI = [Management.Automation.PowerShell]::Create().AddScript($sbGUI).AddPara
 $cmdGUI.RunSpace = $rsGUI
 $handleGUI = $cmdGUI.BeginInvoke()
 
-# Hide Console Window
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]
-public static extern IntPtr GetConsoleWindow();
-
-[DllImport("user32.dll")]
-public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
-'
-
-[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+if (-not $ShowConsole) {
+    # Hide Console Window
+    Add-Type -Name Window -Namespace Console -MemberDefinition '
+    [DllImport("Kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+    
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+    '
+    
+    [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
+}
 
 #Loop Until GUI Closure
 while ( $handleGUI.IsCompleted -eq $false ) { Start-Sleep -Seconds 5 }
