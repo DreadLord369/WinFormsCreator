@@ -98,7 +98,7 @@ $sbGUI = {
             [switch]$Promote
         )
 
-        if ( $Message -ne '' ) {[void][System.Windows.Forms.MessageBox]::Show("$($Message)`r`n`r`nCheck '$($BaseDir)\exceptions.txt' for details.",'Exception Occurred')}
+        if ( $Message -ne '' ) { [void][System.Windows.Forms.MessageBox]::Show("$($Message)`r`n`r`nCheck '$($BaseDir)\exceptions.txt' for details.", 'Exception Occurred') }
 
         $date = Get-Date -Format 'yyyyMMdd HH:mm:ss'
         $ErrorRecord | Out-File "$($BaseDir)\tmpError.txt"
@@ -107,28 +107,28 @@ $sbGUI = {
 
         Remove-Item -Path "$($BaseDir)\tmpError.txt"
 
-        if ( $Promote ) {throw $ErrorRecord}
+        if ( $Promote ) { throw $ErrorRecord }
     }
 
     function ConvertFrom-WinFormsXML {
         param(
-            [Parameter(Mandatory=$true)]$Xml,
+            [Parameter(Mandatory = $true)]$Xml,
             [string]$Reference,
             $ParentControl,
             [switch]$Suppress
         )
 
         try {
-            if ( $Xml.GetType().Name -eq 'String' ) {$Xml = ([xml]$Xml).ChildNodes}
+            if ( $Xml.GetType().Name -eq 'String' ) { $Xml = ([xml]$Xml).ChildNodes }
 
-            if ( $Xml.ToString() -ne 'SplitterPanel' ) {$newControl = New-Object System.Windows.Forms.$($Xml.ToString())}
+            if ( $Xml.ToString() -ne 'SplitterPanel' ) { $newControl = New-Object System.Windows.Forms.$($Xml.ToString()) }
 
             if ( $ParentControl ) {
                 if ( $Xml.ToString() -match "^ToolStrip" ) {
-                    if ( $ParentControl.GetType().Name -match "^ToolStrip" ) {[void]$ParentControl.DropDownItems.Add($newControl)} else {[void]$ParentControl.Items.Add($newControl)}
-                } elseif ( $Xml.ToString() -eq 'ContextMenuStrip' ) {$ParentControl.ContextMenuStrip = $newControl}
-                elseif ( $Xml.ToString() -eq 'SplitterPanel' ) {$newControl = $ParentControl.$($Xml.Name.Split('_')[-1])}
-                else {$ParentControl.Controls.Add($newControl)}
+                    if ( $ParentControl.GetType().Name -match "^ToolStrip" ) { [void]$ParentControl.DropDownItems.Add($newControl) } else { [void]$ParentControl.Items.Add($newControl) }
+                } elseif ( $Xml.ToString() -eq 'ContextMenuStrip' ) { $ParentControl.ContextMenuStrip = $newControl }
+                elseif ( $Xml.ToString() -eq 'SplitterPanel' ) { $newControl = $ParentControl.$($Xml.Name.Split('_')[-1]) }
+                else { $ParentControl.Controls.Add($newControl) }
             }
             
             $Xml.Attributes | ForEach-Object {
@@ -137,44 +137,44 @@ $sbGUI = {
 
                 if ( $Script:specialProps.Array -contains $attribName ) {
                     if ( $attribName -eq 'Items' ) {
-                        $($_.Value -replace "\|\*BreakPT\*\|","`n").Split("`n") | ForEach-Object{[void]$newControl.Items.Add($_)}
+                        $($_.Value -replace "\|\*BreakPT\*\|", "`n").Split("`n") | ForEach-Object { [void]$newControl.Items.Add($_) }
                     } else {
-                            # Other than Items only BoldedDate properties on MonthCalendar control
+                        # Other than Items only BoldedDate properties on MonthCalendar control
                         $methodName = "Add$($attribName)" -replace "s$"
 
-                        $($_.Value -replace "\|\*BreakPT\*\|","`n").Split("`n") | ForEach-Object{$newControl.$attribName.$methodName($_)}
+                        $($_.Value -replace "\|\*BreakPT\*\|", "`n").Split("`n") | ForEach-Object { $newControl.$attribName.$methodName($_) }
                     }
                 } else {
                     switch ($attribName) {
                         FlatAppearance {
-                            $attrib.Value.Split('|') | ForEach-Object {$newControl.FlatAppearance.$($_.Split('=')[0]) = $_.Split('=')[1]}
+                            $attrib.Value.Split('|') | ForEach-Object { $newControl.FlatAppearance.$($_.Split('=')[0]) = $_.Split('=')[1] }
                         }
                         default {
                             if ( $null -ne $newControl.$attribName ) {
                                 if ( $newControl.$attribName.GetType().Name -eq 'Boolean' ) {
-                                    if ( $attrib.Value -eq 'True' ) {$value = $true} else {$value = $false}
-                                } else {$value = $attrib.Value}
-                            } else {$value = $attrib.Value}
+                                    if ( $attrib.Value -eq 'True' ) { $value = $true } else { $value = $false }
+                                } else { $value = $attrib.Value }
+                            } else { $value = $attrib.Value }
                             $newControl.$attribName = $value
                         }
                     }
                 }
 
                 if (( $attrib.ToString() -eq 'Name' ) -and ( $Reference -ne '' )) {
-                    try {$refHashTable = Get-Variable -Name $Reference -Scope Script -ErrorAction Stop}
+                    try { $refHashTable = Get-Variable -Name $Reference -Scope Script -ErrorAction Stop }
                     catch {
                         New-Variable -Name $Reference -Scope Script -Value @{} | Out-Null
                         $refHashTable = Get-Variable -Name $Reference -Scope Script -ErrorAction SilentlyContinue
                     }
 
-                    $refHashTable.Value.Add($attrib.Value,$newControl)
+                    $refHashTable.Value.Add($attrib.Value, $newControl)
                 }
             }
 
-            if ( $Xml.ChildNodes ) {$Xml.ChildNodes | ForEach-Object {ConvertFrom-WinformsXML -Xml $_ -ParentControl $newControl -Reference $Reference -Suppress}}
+            if ( $Xml.ChildNodes ) { $Xml.ChildNodes | ForEach-Object { ConvertFrom-WinformsXML -Xml $_ -ParentControl $newControl -Reference $Reference -Suppress } }
 
-            if ( $Suppress -eq $false ) {return $newControl}
-        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding $($Xml.ToString()) to $($ParentControl.Name)"}
+            if ( $Suppress -eq $false ) { return $newControl }
+        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding $($Xml.ToString()) to $($ParentControl.Name)" }
     }
 
     function Convert-XmlToTreeView {
@@ -190,7 +190,7 @@ $sbGUI = {
             
             if ( $IncrementName ) {
                 $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
-                $returnObj = [pscustomobject]@{OldName=$controlName;NewName=""}
+                $returnObj = [pscustomobject]@{OldName = $controlName; NewName = "" }
                 $loop = 1
 
                 while ( $objRef.Objects.Keys -contains $controlName ) {
@@ -198,12 +198,12 @@ $sbGUI = {
                         $afterLastUnderscoreText = $controlName -replace "$($controlName.Substring(0,($controlName.LastIndexOf('_') + 1)))"
 
                         if ( $($afterLastUnderscoreText -replace "\D").Length -eq $afterLastUnderscoreText.Length ) {
-                            $controlName = $controlName -replace "_$($afterLastUnderscoreText)$","_$([int]$afterLastUnderscoreText + 1)"
-                        } else {$controlName = $controlName + '_1'}
-                    } else {$controlName = $controlName + '_1' }
+                            $controlName = $controlName -replace "_$($afterLastUnderscoreText)$", "_$([int]$afterLastUnderscoreText + 1)"
+                        } else { $controlName = $controlName + '_1' }
+                    } else { $controlName = $controlName + '_1' }
 
-                        # Make sure does not cause infinite loop
-                    if ( $loop -eq 1000 ) {throw "Unable to determine incremented control name."}
+                    # Make sure does not cause infinite loop
+                    if ( $loop -eq 1000 ) { throw "Unable to determine incremented control name." }
                     $loop++
                 }
 
@@ -211,38 +211,38 @@ $sbGUI = {
                 $returnObj
             }
 
-            if ( $controlType -ne 'SplitterPanel' ) {Add-TreeNode -TreeObject $TreeObject -ControlType $controlType -ControlName $controlName}
+            if ( $controlType -ne 'SplitterPanel' ) { Add-TreeNode -TreeObject $TreeObject -ControlType $controlType -ControlName $controlName }
 
             $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
             $newControl = $objRef.Objects[$controlName]
 
             $Xml.Attributes.GetEnumerator().ForEach({
-                if ( $_.ToString() -ne 'Name' ) {
-                    if ( $null -eq $objRef.Changes[$controlName] ) {$objRef.Changes[$controlName] = @{}}
+                    if ( $_.ToString() -ne 'Name' ) {
+                        if ( $null -eq $objRef.Changes[$controlName] ) { $objRef.Changes[$controlName] = @{} }
 
-                    if ( $null -ne $($newControl.$($_.ToString())) ) {
-                        if ( $($newControl.$($_.ToString())).GetType().Name -eq 'Boolean' ) {
-                            if ( $_.Value -eq 'True' ) {$value = $true} else {$value = $false}
-                        } else {$value = $_.Value}
-                    } else {$value = $_.Value}
+                        if ( $null -ne $($newControl.$($_.ToString())) ) {
+                            if ( $($newControl.$($_.ToString())).GetType().Name -eq 'Boolean' ) {
+                                if ( $_.Value -eq 'True' ) { $value = $true } else { $value = $false }
+                            } else { $value = $_.Value }
+                        } else { $value = $_.Value }
 
-                    try {$newControl.$($_.ToString()) = $value}
-                    catch {if ( $_.Exception.Message -notmatch 'MDI container forms must be top-level' ) {throw $_}}
+                        try { $newControl.$($_.ToString()) = $value }
+                        catch { if ( $_.Exception.Message -notmatch 'MDI container forms must be top-level' ) { throw $_ } }
 
-                    $objRef.Changes[$controlName][$_.ToString()] = $_.Value
-                }
-            })
+                        $objRef.Changes[$controlName][$_.ToString()] = $_.Value
+                    }
+                })
 
             if ( $Xml.ChildNodes.Count -gt 0 ) {
-                if ( $IncrementName ) {$Xml.ChildNodes.ForEach({Convert-XmlToTreeView -Xml $_ -TreeObject $objRef.TreeNodes[$controlName] -IncrementName})}
-                else {$Xml.ChildNodes.ForEach({Convert-XmlToTreeView -Xml $_ -TreeObject $objRef.TreeNodes[$controlName]})}
+                if ( $IncrementName ) { $Xml.ChildNodes.ForEach({ Convert-XmlToTreeView -Xml $_ -TreeObject $objRef.TreeNodes[$controlName] -IncrementName }) }
+                else { $Xml.ChildNodes.ForEach({ Convert-XmlToTreeView -Xml $_ -TreeObject $objRef.TreeNodes[$controlName] }) }
             }
-        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding '$($Xml.ToString()) - $($Xml.Name)' to Treeview."}
+        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding '$($Xml.ToString()) - $($Xml.Name)' to Treeview." }
     }
 
     function Get-CustomControl {
         param(
-            [Parameter(Mandatory=$true)][hashtable]$ControlInfo,
+            [Parameter(Mandatory = $true)][hashtable]$ControlInfo,
             [string]$Reference,
             [switch]$Suppress
         )
@@ -252,14 +252,14 @@ $sbGUI = {
             $control = ConvertFrom-WinFormsXML -Xml "$($ControlInfo.XMLText)" -Reference $refGuid
             $refControl = Get-Variable -Name $refGuid -ValueOnly
 
-            if ( $ControlInfo.Events ) {$ControlInfo.Events.ForEach({$refControl[$_.Name]."add_$($_.EventType)"($_.ScriptBlock)})}
+            if ( $ControlInfo.Events ) { $ControlInfo.Events.ForEach({ $refControl[$_.Name]."add_$($_.EventType)"($_.ScriptBlock) }) }
 
-            if ( $Reference -ne '' ) {New-Variable -Name $Reference -Scope Script -Value $refControl}
+            if ( $Reference -ne '' ) { New-Variable -Name $Reference -Scope Script -Value $refControl }
 
             Remove-Variable -Name refGuid -Scope Script
 
-            if ( $Suppress -eq $false ) {return $control}
-        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered getting custom control."}
+            if ( $Suppress -eq $false ) { return $control }
+        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered getting custom control." }
     }
 
     function Get-UserInputFromForm {
@@ -276,7 +276,7 @@ $sbGUI = {
                 [void]$inputForm.ShowDialog()
 
                 $returnVal = [pscustomobject]@{
-                    Result = $inputForm.DialogResult
+                    Result  = $inputForm.DialogResult
                     NewName = $inputForm.Controls['UserInput'].Text
                 }
 
@@ -285,8 +285,8 @@ $sbGUI = {
         } catch {
             Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered setting new control name."
         } finally {
-            try {$inputForm.Dispose()}
-            catch {if ( $_.Exception.Message -ne "You cannot call a method on a null-valued expression." ) {throw $_}}
+            try { $inputForm.Dispose() }
+            catch { if ( $_.Exception.Message -ne "You cannot call a method on a null-valued expression." ) { throw $_ } }
         }
     }
 
@@ -300,51 +300,51 @@ $sbGUI = {
         if ( $ControlName -eq '' ) {
             $userInput = Get-UserInputFromForm -SetText "$($Script:supportedControls.Where({$_.Name -eq $ControlType}).Prefix)_"
 
-            if ( $userInput.Result -eq 'OK' ) {$ControlName = $userInput.NewName}
+            if ( $userInput.Result -eq 'OK' ) { $ControlName = $userInput.NewName }
         }
 
         try {
             if ( $TreeObject.GetType().Name -eq 'TreeView' ) {
                 if ( $ControlType -eq 'Form' ) {
-                        # Clear the Assigned Events ListBox
+                    # Clear the Assigned Events ListBox
                     $Script:refs['lst_AssignedEvents'].Items.Clear()
                     $Script:refs['lst_AssignedEvents'].Items.Add('No Events')
                     $Script:refs['lst_AssignedEvents'].Enabled = $false
                     
-                        # Create the TreeNode
-                    $newTreeNode = $TreeObject.Nodes.Add($ControlName,"Form - $($ControlName)")
+                    # Create the TreeNode
+                    $newTreeNode = $TreeObject.Nodes.Add($ControlName, "Form - $($ControlName)")
 
-                        # Create the Form
+                    # Create the Form
                     $form = New-Object System.Windows.Forms.Form
                     $form.Name = $ControlName
-                    $form.Location = New-Object System.Drawing.Point(0,0)
+                    $form.Location = New-Object System.Drawing.Point(0, 0)
                     $form.Add_FormClosing({
-                        param($Sender,$e)
+                            param($Sender, $e)
 
-                        $e.Cancel = $true
-                    })
+                            $e.Cancel = $true
+                        })
                     $form.Add_Click({
-                        if (( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) -and ( $args[1].Button -eq 'Left' )) {
-                            $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]
-                        }
-                    })
+                            if (( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) -and ( $args[1].Button -eq 'Left' )) {
+                                $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]
+                            }
+                        })
                     $form.Add_ReSize({
-                        if ( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) {$Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]}
+                            if ( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) { $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name] }
 
-                        $Script:refs['PropertyGrid'].Refresh()
+                            $Script:refs['PropertyGrid'].Refresh()
 
-                        $this.ParentForm.Refresh()
-                    })
-                    $form.Add_LocationChanged({$this.ParentForm.Refresh()})
+                            $this.ParentForm.Refresh()
+                        })
+                    $form.Add_LocationChanged({ $this.ParentForm.Refresh() })
                     $form.Add_ReSizeEnd({
-                        if ( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) {$Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]}
+                            if ( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) { $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name] }
                         
-                        $Script:refs['PropertyGrid'].Refresh()
+                            $Script:refs['PropertyGrid'].Refresh()
 
-                        $this.ParentForm.Refresh()
-                    })
+                            $this.ParentForm.Refresh()
+                        })
 
-                        # Add the selected object control buttons
+                    # Add the selected object control buttons
                     $Script:sButtons = $null
                     Remove-Variable -Name sButtons -Scope Script -ErrorAction SilentlyContinue
 
@@ -358,115 +358,115 @@ $sbGUI = {
                     ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MTop" Cursor="SizeNS" BackColor="Black" Size="8,8" Visible="False" />'
                     ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MBottom" Cursor="SizeNS" BackColor="Black" Size="8,8" Visible="False" />'
 
-                        # Add the Mouse events to each of the selected object control buttons
+                    # Add the Mouse events to each of the selected object control buttons
                     $sButtons.GetEnumerator().ForEach({
-                        $_.Value.Add_MouseMove({
-                            param($Sender, $e)
+                            $_.Value.Add_MouseMove({
+                                    param($Sender, $e)
 
-                            try {
-                                $currentMousePOS = [System.Windows.Forms.Cursor]::Position
-                                    # If mouse button equals left and there was a change in mouse position (reduces flicker due to control refreshes during Move-SButtons)
-                                if (( $e.Button -eq 'Left' ) -and (( $currentMousePOS.X -ne $Script:oldMousePOS.X ) -or ( $currentMousePOS.Y -ne $Script:oldMousePOS.Y ))) {
+                                    try {
+                                        $currentMousePOS = [System.Windows.Forms.Cursor]::Position
+                                        # If mouse button equals left and there was a change in mouse position (reduces flicker due to control refreshes during Move-SButtons)
+                                        if (( $e.Button -eq 'Left' ) -and (( $currentMousePOS.X -ne $Script:oldMousePOS.X ) -or ( $currentMousePOS.Y -ne $Script:oldMousePOS.Y ))) {
                                 
-                                    if ( @('SplitterPanel','TabPage') -notcontains $Script:refs['PropertyGrid'].SelectedObject.GetType().Name ) {
-                                        $sObj = $Script:sRect
+                                            if ( @('SplitterPanel', 'TabPage') -notcontains $Script:refs['PropertyGrid'].SelectedObject.GetType().Name ) {
+                                                $sObj = $Script:sRect
 
-                                        $msObj = @{}
+                                                $msObj = @{}
 
-                                        switch ($Sender.Name) {
-                                                btn_SizeAll {
-                                                    if (( @('FlowLayoutPanel','TableLayoutPanel') -contains $Script:refs['PropertyGrid'].SelectedObject.Parent.GetType().Name ) -or
+                                                switch ($Sender.Name) {
+                                                    btn_SizeAll {
+                                                        if (( @('FlowLayoutPanel', 'TableLayoutPanel') -contains $Script:refs['PropertyGrid'].SelectedObject.Parent.GetType().Name ) -or
                                                        ( $Script:refs['PropertyGrid'].SelectedObject.Dock -ne 'None' )) {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0,0)
-                                                    } else {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X),($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                            $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
+                                                        } else {
+                                                            $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), ($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        }
+                                                        $newSize = $Script:sRect.Size
                                                     }
-                                                    $newSize = $Script:sRect.Size
+                                                    btn_TLeft {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), ($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                    }
+                                                    btn_TRight {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                    }
+                                                    btn_BLeft {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), 0)
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                    }
+                                                    btn_BRight {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                    }
+                                                    btn_MLeft {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), 0)
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), $sObj.Size.Height)
+                                                    }
+                                                    btn_MRight {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
+                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), $sObj.Size.Height)
+                                                    }
+                                                    btn_MTop {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $newSize = New-Object System.Drawing.Size($sObj.Size.Width, ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                    }
+                                                    btn_MBottom {
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
+                                                        $newSize = New-Object System.Drawing.Size($sObj.Size.Width, ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                    }
                                                 }
-                                                btn_TLeft {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X),($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X),($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
-                                                }
-                                                btn_TRight {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(0,($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X),($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
-                                                }
-                                                btn_BLeft {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X),0)
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X),($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                }
-                                                btn_BRight {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(0,0)
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X),($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                }
-                                                btn_MLeft {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X),0)
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X),$sObj.Size.Height)
-                                                }
-                                                btn_MRight {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(0,0)
-                                                    $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X),$sObj.Size.Height)
-                                                }
-                                                btn_MTop {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(0,($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                    $newSize = New-Object System.Drawing.Size($sObj.Size.Width,($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
-                                                }
-                                                btn_MBottom {
-                                                    $msObj.LocOffset = New-Object System.Drawing.Point(0,0)
-                                                    $newSize = New-Object System.Drawing.Size($sObj.Size.Width,($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                }
-                                        }
 
-                                        $msObj.Size = $newSize
+                                                $msObj.Size = $newSize
 
-                                        $Script:MouseMoving = $true
-                                        Move-SButtons -Object $msObj
-                                        $Script:MouseMoving = $false
+                                                $Script:MouseMoving = $true
+                                                Move-SButtons -Object $msObj
+                                                $Script:MouseMoving = $false
 
-                                        $refFID = $Script:refsFID.Form.Objects.Values.Where({$_.GetType().Name -eq 'Form'})
-                                        $clientParent = $Script:refs['PropertyGrid'].SelectedObject.Parent.PointToClient([System.Drawing.Point]::Empty)
-                                        $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
+                                                $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
+                                                $clientParent = $Script:refs['PropertyGrid'].SelectedObject.Parent.PointToClient([System.Drawing.Point]::Empty)
+                                                $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
 
-                                        $newLocation = New-Object System.Drawing.Point(($Script:sRect.Location.X - (($clientParent.X - $clientForm.X) * -1)),($Script:sRect.Location.Y - (($clientParent.Y - $clientForm.Y) * -1)))
+                                                $newLocation = New-Object System.Drawing.Point(($Script:sRect.Location.X - (($clientParent.X - $clientForm.X) * -1)), ($Script:sRect.Location.Y - (($clientParent.Y - $clientForm.Y) * -1)))
 
-                                        $Script:refs['PropertyGrid'].SelectedObject.Size = $Script:sRect.Size
-                                        $Script:refs['PropertyGrid'].SelectedObject.Location = $newLocation
-                                    }
+                                                $Script:refs['PropertyGrid'].SelectedObject.Size = $Script:sRect.Size
+                                                $Script:refs['PropertyGrid'].SelectedObject.Location = $newLocation
+                                            }
 
-                                    $Script:oldMousePos = $currentMousePOS
+                                            $Script:oldMousePos = $currentMousePOS
 
-                                    $Script:refs['PropertyGrid'].Refresh()
-                                } else {$Script:oldMousePos = [System.Windows.Forms.Cursor]::Position}
-                            } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while moving mouse over selected control."}
+                                            $Script:refs['PropertyGrid'].Refresh()
+                                        } else { $Script:oldMousePos = [System.Windows.Forms.Cursor]::Position }
+                                    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while moving mouse over selected control." }
+                                })
+                            $_.Value.Add_MouseUp({
+                                    Move-SButtons -Object $Script:refs['PropertyGrid'].SelectedObject
+                                })
                         })
-                        $_.Value.Add_MouseUp({
-                            Move-SButtons -Object $Script:refs['PropertyGrid'].SelectedObject
-                        })
-                    })
 
-                        # Set MDIParent and Show Form
+                    # Set MDIParent and Show Form
                     $form.MDIParent = $refs['MainForm']
                     $form.Show()
 
-                        # Create reference object for the Form In Design
+                    # Create reference object for the Form In Design
                     $Script:refsFID = @{
                         Form = @{
-                            TreeNodes=@{"$($ControlName)" = $newTreeNode}
-                            Objects=@{"$($ControlName)" = $form}
-                            Changes=@{}
-                            Events=@{}
+                            TreeNodes = @{"$($ControlName)" = $newTreeNode }
+                            Objects   = @{"$($ControlName)" = $form }
+                            Changes   = @{}
+                            Events    = @{}
                         }
                     }
-                } elseif (( @('ContextMenuStrip','Timer') -contains $ControlType ) -or ( $ControlType -match "Dialog$" )) {
-                    $newTreeNode = $Script:refs['TreeView'].Nodes.Add($ControlName,"$($ControlType) - $($ControlName)")
+                } elseif (( @('ContextMenuStrip', 'Timer') -contains $ControlType ) -or ( $ControlType -match "Dialog$" )) {
+                    $newTreeNode = $Script:refs['TreeView'].Nodes.Add($ControlName, "$($ControlType) - $($ControlName)")
                     
-                    if ( $null -eq $Script:refsFID[$ControlType] ) {$Script:refsFID[$ControlType]=@{}}
+                    if ( $null -eq $Script:refsFID[$ControlType] ) { $Script:refsFID[$ControlType] = @{} }
 
                     $Script:refsFID[$ControlType][$ControlName] = @{
-                        TreeNodes = @{"$($ControlName)" = $newTreeNode}
-                        Objects = @{"$($ControlName)" = New-Object System.Windows.Forms.$ControlType}
-                        Changes = @{}
-                        Events = @{}
+                        TreeNodes = @{"$($ControlName)" = $newTreeNode }
+                        Objects   = @{"$($ControlName)" = New-Object System.Windows.Forms.$ControlType }
+                        Changes   = @{}
+                        Events    = @{}
                     }
                 }
             } else {
@@ -478,36 +478,36 @@ $sbGUI = {
                         $newControl.Name = $ControlName
 
                         if ( $ControlType -match "^ToolStrip" ) {
-                            if ( $objRef.Objects[$TreeObject.Name].GetType().Name -match "^ToolStrip" ) {[void]$objRef.Objects[$TreeObject.Name].DropDownItems.Add($newControl)}
-                            else {[void]$objRef.Objects[$TreeObject.Name].Items.Add($newControl)}
+                            if ( $objRef.Objects[$TreeObject.Name].GetType().Name -match "^ToolStrip" ) { [void]$objRef.Objects[$TreeObject.Name].DropDownItems.Add($newControl) }
+                            else { [void]$objRef.Objects[$TreeObject.Name].Items.Add($newControl) }
                         } elseif ( $ControlType -eq 'ContextMenuStrip' ) {
                             $objRef.Objects[$TreeObject.Name].ContextMenuStrip = $newControl
-                        } else {$objRef.Objects[$TreeObject.Name].Controls.Add($newControl)}
+                        } else { $objRef.Objects[$TreeObject.Name].Controls.Add($newControl) }
 
                         try {
                             $newControl.Add_MouseUp({
-                                if (( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) -and ( $args[1].Button -eq 'Left' )) {
-                                    $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]
-                                }
-                            })
-                        } catch {
-                            if ( $_.Exception.Message -notmatch 'not valid on this ActiveX control' ) {throw $_}
-                        }
-
-                        $newTreeNode = $TreeObject.Nodes.Add($ControlName,"$($ControlType) - $($ControlName)")
-                        $objRef.TreeNodes[$ControlName] = $newTreeNode
-                        $objRef.Objects[$ControlName] = $newControl
-
-                        if ( $ControlType -eq 'SplitContainer' ) {
-                            for ( $i=1;$i -le 2;$i++ ) {
-                                $objRef.TreeNodes["$($ControlName)_Panel$($i)"] = $newTreeNode.Nodes.Add("$($ControlName)_Panel$($i)","SplitterPanel - $($ControlName)_Panel$($i)")
-                                $objRef.Objects["$($ControlName)_Panel$($i)"] = $newControl."Panel$($i)"
-                                $objRef.Objects["$($ControlName)_Panel$($i)"].Name = "$($ControlName)_Panel$($i)"
-                                $objRef.Objects["$($ControlName)_Panel$($i)"].Add_MouseDown({
                                     if (( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) -and ( $args[1].Button -eq 'Left' )) {
                                         $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]
                                     }
                                 })
+                        } catch {
+                            if ( $_.Exception.Message -notmatch 'not valid on this ActiveX control' ) { throw $_ }
+                        }
+
+                        $newTreeNode = $TreeObject.Nodes.Add($ControlName, "$($ControlType) - $($ControlName)")
+                        $objRef.TreeNodes[$ControlName] = $newTreeNode
+                        $objRef.Objects[$ControlName] = $newControl
+
+                        if ( $ControlType -eq 'SplitContainer' ) {
+                            for ( $i = 1; $i -le 2; $i++ ) {
+                                $objRef.TreeNodes["$($ControlName)_Panel$($i)"] = $newTreeNode.Nodes.Add("$($ControlName)_Panel$($i)", "SplitterPanel - $($ControlName)_Panel$($i)")
+                                $objRef.Objects["$($ControlName)_Panel$($i)"] = $newControl."Panel$($i)"
+                                $objRef.Objects["$($ControlName)_Panel$($i)"].Name = "$($ControlName)_Panel$($i)"
+                                $objRef.Objects["$($ControlName)_Panel$($i)"].Add_MouseDown({
+                                        if (( $Script:refs['PropertyGrid'].SelectedObject -ne $this ) -and ( $args[1].Button -eq 'Left' )) {
+                                            $Script:refs['TreeView'].SelectedNode = $Script:refsFID.Form.TreeNodes[$this.Name]
+                                        }
+                                    })
                             }
                             
                             $newTreeNode.Expand()
@@ -520,9 +520,9 @@ $sbGUI = {
                 $newTreeNode.ContextMenuStrip = $Script:reuseContext['TreeNode']
                 $Script:refs['TreeView'].SelectedNode = $newTreeNode
 
-                if (( $ControlType -eq 'TabControl' ) -and ( $Script:openingProject -eq $false )) {Add-TreeNode -TreeObject $newTreeNode -ControlType TabPage -ControlName 'Tab 1'}
+                if (( $ControlType -eq 'TabControl' ) -and ( $Script:openingProject -eq $false )) { Add-TreeNode -TreeObject $newTreeNode -ControlType TabPage -ControlName 'Tab 1' }
             }
-        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding TreeNode ($($ControlType) - $($ControlName))."}
+        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered adding TreeNode ($($ControlType) - $($ControlName))." }
     }
 
     function Get-ChildNodeList {
@@ -536,10 +536,10 @@ $sbGUI = {
         if ( $TreeNode.Nodes.Count -gt 0 ) {
             try {
                 $TreeNode.Nodes.ForEach({
-                    $returnVal += $(if ( $Level ) { "$($_.Level):$($_.Name)" } else {$_.Name})
-                    $returnVal += $(if ( $Level ) { Get-ChildNodeList -TreeNode $_ -Level } else { Get-ChildNodeList -TreeNode $_ })
-                })
-            } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered building Treenode list."}
+                        $returnVal += $(if ( $Level ) { "$($_.Level):$($_.Name)" } else { $_.Name })
+                        $returnVal += $(if ( $Level ) { Get-ChildNodeList -TreeNode $_ -Level } else { Get-ChildNodeList -TreeNode $_ })
+                    })
+            } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered building Treenode list." }
         }
 
         return $returnVal
@@ -549,19 +549,19 @@ $sbGUI = {
         param([System.Windows.Forms.TreeNode]$TreeNode)
 
         try {
-            if ( $TreeNode.Level -gt 0 ) {while ( $TreeNode.Parent ) {$TreeNode = $TreeNode.Parent}}
+            if ( $TreeNode.Level -gt 0 ) { while ( $TreeNode.Parent ) { $TreeNode = $TreeNode.Parent } }
 
             $type = $TreeNode.Text -replace " - .*$"
             $name = $TreeNode.Name
 
             $returnVal = [pscustomobject]@{
-                Success = $true
-                RootType = $type
-                RootName = $name
+                Success   = $true
+                RootType  = $type
+                RootName  = $name
                 TreeNodes = ''
-                Objects = ''
-                Changes = ''
-                Events = ''
+                Objects   = ''
+                Changes   = ''
+                Events    = ''
             }
 
             if ( $type -eq 'Form' ) {
@@ -569,84 +569,84 @@ $sbGUI = {
                 $returnVal.Objects = $Script:refsFID[$type].Objects
                 $returnVal.Changes = $Script:refsFID[$type].Changes
                 $returnVal.Events = $Script:refsFID[$type].Events
-            } elseif (( @('ContextMenuStrip','Timer') -contains $type ) -or ( $type -match "Dialog$" )) {
+            } elseif (( @('ContextMenuStrip', 'Timer') -contains $type ) -or ( $type -match "Dialog$" )) {
                 $returnVal.TreeNodes = $Script:refsFID[$type][$name].TreeNodes
                 $returnVal.Objects = $Script:refsFID[$type][$name].Objects
                 $returnVal.Changes = $Script:refsFID[$type][$name].Changes
                 $returnVal.Events = $Script:refsFID[$type][$name].Events
-            } else {$returnVal.Success = $false}
+            } else { $returnVal.Success = $false }
 
             return $returnVal
-        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered determining root node object reference."}
+        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered determining root node object reference." }
     }
 
     function Move-SButtons {
         param($Object)
         
-        if ( ($Script:supportedControls.Where({$_.Type -eq 'Parentless'}).Name + @('Form','ToolStripMenuItem','ToolStripComboBox','ToolStripTextBox','ToolStripSeparator','ContextMenuStrip')) -notcontains $Object.GetType().Name ) {
+        if ( ($Script:supportedControls.Where({ $_.Type -eq 'Parentless' }).Name + @('Form', 'ToolStripMenuItem', 'ToolStripComboBox', 'ToolStripTextBox', 'ToolStripSeparator', 'ContextMenuStrip')) -notcontains $Object.GetType().Name ) {
             $newSize = $Object.Size
             
             if ( $Object.GetType().Name -ne 'HashTable' ) {
-                $refFID = $Script:refsFID.Form.Objects.Values.Where({$_.GetType().Name -eq 'Form'})
-                $Script:sButtons.GetEnumerator().ForEach({$_.Value.Visible = $true})
+                $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
+                $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $true })
                 $newLoc = $Object.PointToClient([System.Drawing.Point]::Empty)
                 
                 if ( $Script:MouseMoving -eq $true ) {
                     $clientParent = $Object.Parent.PointToClient([System.Drawing.Point]::Empty)
                     $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
-                    $clientOffset = New-Object System.Drawing.Point((($clientParent.X - $clientForm.X) * -1),(($clientParent.Y - $clientForm.Y) * -1))
-                } else {$clientOffset = New-Object System.Drawing.Point(0,0)}
+                    $clientOffset = New-Object System.Drawing.Point((($clientParent.X - $clientForm.X) * -1), (($clientParent.Y - $clientForm.Y) * -1))
+                } else { $clientOffset = New-Object System.Drawing.Point(0, 0) }
                 
                 $newLoc.X = ($newLoc.X * -1) - $refFID.Location.X - $refs['MainForm'].Location.X - $clientOffset.X - $Script:refs['ms_Left'].Size.Width - 18
                 $newLoc.Y = ($newLoc.Y * -1) - $refFID.Location.Y - $refs['MainForm'].Location.Y - $clientOffset.Y - 108
 
-                if ( $Script:refs['pnl_Left'].Visible -eq $true ) {$newLoc.X = $newLoc.X - $Script:refs['pnl_Left'].Size.Width - $Script:refs['lbl_Left'].Size.Width}
-            } else {$newLoc = New-Object System.Drawing.Point(($Script:sButtons['btn_TLeft'].Location.X + $Object.LocOffset.X),($Script:sButtons['btn_TLeft'].Location.Y + $Object.LocOffset.Y))}
+                if ( $Script:refs['pnl_Left'].Visible -eq $true ) { $newLoc.X = $newLoc.X - $Script:refs['pnl_Left'].Size.Width - $Script:refs['lbl_Left'].Size.Width }
+            } else { $newLoc = New-Object System.Drawing.Point(($Script:sButtons['btn_TLeft'].Location.X + $Object.LocOffset.X), ($Script:sButtons['btn_TLeft'].Location.Y + $Object.LocOffset.Y)) }
 
-            $Script:sRect = New-Object System.Drawing.Rectangle($newLoc,$newSize)
+            $Script:sRect = New-Object System.Drawing.Rectangle($newLoc, $newSize)
 
             $Script:sButtons.GetEnumerator().ForEach({
-                $btn = $_.Value
+                    $btn = $_.Value
 
-                switch ($btn.Name) {
-                    btn_SizeAll {$btn.Location = New-Object System.Drawing.Point(($newLoc.X + 13),$newLoc.Y)}
-                    btn_TLeft {$btn.Location = New-Object System.Drawing.Point($newLoc.X,$newLoc.Y)}
-                    btn_TRight {$btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8),$newLoc.Y)}
-                    btn_BLeft {$btn.Location = New-Object System.Drawing.Point($newLoc.X,($newLoc.Y + $newSize.Height - 8))}
-                    btn_BRight {$btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8),($newLoc.Y + $newSize.Height - 8))}
-                    btn_MLeft {
-                        if ( $Object.Size.Height -gt 28 ) {
-                            $btn.Location = New-Object System.Drawing.Point($newLoc.X,($newLoc.Y + ($newSize.Height / 2) - 4))
-                            $btn.Visible = $true
-                        } else {$btn.Visible = $false}
+                    switch ($btn.Name) {
+                        btn_SizeAll { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + 13), $newLoc.Y) }
+                        btn_TLeft { $btn.Location = New-Object System.Drawing.Point($newLoc.X, $newLoc.Y) }
+                        btn_TRight { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), $newLoc.Y) }
+                        btn_BLeft { $btn.Location = New-Object System.Drawing.Point($newLoc.X, ($newLoc.Y + $newSize.Height - 8)) }
+                        btn_BRight { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), ($newLoc.Y + $newSize.Height - 8)) }
+                        btn_MLeft {
+                            if ( $Object.Size.Height -gt 28 ) {
+                                $btn.Location = New-Object System.Drawing.Point($newLoc.X, ($newLoc.Y + ($newSize.Height / 2) - 4))
+                                $btn.Visible = $true
+                            } else { $btn.Visible = $false }
+                        }
+                        btn_MRight {
+                            if ( $Object.Size.Height -gt 28 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), ($newLoc.Y + ($newSize.Height / 2) - 4))
+                                $btn.Visible = $true
+                            } else { $btn.Visible = $false }
+                        }
+                        btn_MTop {
+                            if ( $Object.Size.Width -gt 40 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4), $newLoc.Y)
+                                $btn.Visible = $true
+                            } else { $btn.Visible = $false }
+                        }
+                        btn_MBottom {
+                            if ( $Object.Size.Width -gt 40 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4), ($newLoc.Y + $newSize.Height - 8))
+                                $btn.Visible = $true
+                            } else { $btn.Visible = $false }
+                        }
                     }
-                    btn_MRight {
-                        if ( $Object.Size.Height -gt 28 ) {
-                            $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8),($newLoc.Y + ($newSize.Height / 2) - 4))
-                            $btn.Visible = $true
-                        } else {$btn.Visible = $false}
-                    }
-                    btn_MTop {
-                        if ( $Object.Size.Width -gt 40 ) {
-                            $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4),$newLoc.Y)
-                            $btn.Visible = $true
-                        } else {$btn.Visible = $false}
-                    }
-                    btn_MBottom {
-                        if ( $Object.Size.Width -gt 40 ) {
-                            $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4),($newLoc.Y + $newSize.Height - 8))
-                            $btn.Visible = $true
-                        } else {$btn.Visible = $false}
-                    }
-                }
 
-                $btn.BringToFront()
-                $btn.Refresh()
-            })
+                    $btn.BringToFront()
+                    $btn.Refresh()
+                })
 
             $Script:refs['PropertyGrid'].SelectedObject.Refresh()
             $Script:refs['PropertyGrid'].SelectedObject.Parent.Refresh()
-        } else {$Script:sButtons.GetEnumerator().ForEach({$_.Value.Visible = $false})}
+        } else { $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $false }) }
     }
 
     function Save-Project {
@@ -664,13 +664,13 @@ $sbGUI = {
 <SaveFileDialog InitialDirectory="$($BaseDir)\SavedProjects" AddExtension="True" DefaultExt="fbs" Filter="fbs files (*.fbs)|*.fbs" FileName="$($projectName)" OverwritePrompt="True" ValidateNames="True" RestoreDirectory="True" />
 "@
                 $saveDialog.Add_FileOK({
-                    param($Sender,$e)
+                        param($Sender, $e)
 
-                    if ( $($this.FileName | Split-Path -Leaf) -eq 'NewProject.fbs' ) {
-                        [void][System.Windows.Forms.MessageBox]::Show("You cannot save a project with the file name 'NewProject.fbs'",'Validation Error')
-                        $e.Cancel = $true
-                    }
-                })
+                        if ( $($this.FileName | Split-Path -Leaf) -eq 'NewProject.fbs' ) {
+                            [void][System.Windows.Forms.MessageBox]::Show("You cannot save a project with the file name 'NewProject.fbs'", 'Validation Error')
+                            $e.Cancel = $true
+                        }
+                    })
 
                 try {
                     [void]$saveDialog.ShowDialog()
@@ -678,7 +678,7 @@ $sbGUI = {
                     if (( $saveDialog.FileName -ne '' ) -and ( $saveDialog.FileName -ne 'NewProject.fbs' )) {
                         $projectName = $saveDialog.FileName | Split-Path -Leaf
                         $Script:projectsDir = $saveDialog.FileName | Split-Path -Parent
-                        if ( (Test-Path -Path "$($Script:projectsDir)") -eq $false ) {New-Item -Path "$($Script:projectsDir)" -ItemType Directory | Out-Null}
+                        if ( (Test-Path -Path "$($Script:projectsDir)") -eq $false ) { New-Item -Path "$($Script:projectsDir)" -ItemType Directory | Out-Null }
                     } else {
                         $projectName = ''
                     }
@@ -700,184 +700,183 @@ $sbGUI = {
                 $tempPGrid.PropertySort = 'Alphabetical'
 
                 $Script:refs['TreeView'].Nodes.ForEach({
-                    $currentNode = $xml.Data
-                    $rootControlType = $_.Text -replace " - .*$"
-                    $rootControlName = $_.Name
+                        $currentNode = $xml.Data
+                        $rootControlType = $_.Text -replace " - .*$"
+                        $rootControlName = $_.Name
 
-                    $objRef = Get-RootNodeObjRef -TreeNode $($Script:refs['TreeView'].Nodes | Where-Object { $_.Name -eq $rootControlName -and $_.Text -match "^$($rootControlType)" })
+                        $objRef = Get-RootNodeObjRef -TreeNode $($Script:refs['TreeView'].Nodes | Where-Object { $_.Name -eq $rootControlName -and $_.Text -match "^$($rootControlType)" })
 
-                    $nodeIndex = @("0:$($rootControlName)")
-                    $nodeIndex += Get-ChildNodeList -TreeNode $objRef.TreeNodes[$rootControlName] -Level
+                        $nodeIndex = @("0:$($rootControlName)")
+                        $nodeIndex += Get-ChildNodeList -TreeNode $objRef.TreeNodes[$rootControlName] -Level
 
-                    @(0..($nodeIndex.Count-1)).ForEach({
-                        $nodeName = $nodeIndex[$_] -replace "^\d+:"
-                        $newElementType = $objRef.Objects[$nodeName].GetType().Name
-                        [int]$nodeDepth = $nodeIndex[$_] -replace ":.*$"
+                        @(0..($nodeIndex.Count - 1)).ForEach({
+                                $nodeName = $nodeIndex[$_] -replace "^\d+:"
+                                $newElementType = $objRef.Objects[$nodeName].GetType().Name
+                                [int]$nodeDepth = $nodeIndex[$_] -replace ":.*$"
 
-                        $newElement = $xml.CreateElement($newElementType)
-                        $newElement.SetAttribute("Name",$nodeName)
+                                $newElement = $xml.CreateElement($newElementType)
+                                $newElement.SetAttribute("Name", $nodeName)
 
-                        $tempPGrid.SelectedObject = $objRef.Objects[$nodeName]
+                                $tempPGrid.SelectedObject = $objRef.Objects[$nodeName]
 
-                            # Set certain properties first
-                        $Script:specialProps.Before.ForEach({
-                            $prop = $_
-                            $tempGI = $tempPGrid.SelectedGridItem.Parent.GridItems.Where({$_.PropertyLabel -eq $prop})
+                                # Set certain properties first
+                                $Script:specialProps.Before.ForEach({
+                                        $prop = $_
+                                        $tempGI = $tempPGrid.SelectedGridItem.Parent.GridItems.Where({ $_.PropertyLabel -eq $prop })
 
-                            if ( $tempGI.Count -gt 0 ) {
-                                if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) {$newElement.SetAttribute($tempGI.PropertyLabel,$tempGI.GetPropertyTextValue())}
-                            }
-                        })
+                                        if ( $tempGI.Count -gt 0 ) {
+                                            if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) { $newElement.SetAttribute($tempGI.PropertyLabel, $tempGI.GetPropertyTextValue()) }
+                                        }
+                                    })
 
-                            # Set other attributes
-                        $tempPGrid.SelectedGridItem.Parent.GridItems.ForEach({
-                            $checkReflector = $true
-                            $tempGI = $_
+                                # Set other attributes
+                                $tempPGrid.SelectedGridItem.Parent.GridItems.ForEach({
+                                        $checkReflector = $true
+                                        $tempGI = $_
                             
-                            if ( $Script:specialProps.All -contains $tempGI.PropertyLabel ) {
-                                switch ($tempGI.PropertyLabel) {
-                                    Location {
-                                        if (( $tempPGrid.SelectedObject.Dock -ne 'None' ) -or
+                                        if ( $Script:specialProps.All -contains $tempGI.PropertyLabel ) {
+                                            switch ($tempGI.PropertyLabel) {
+                                                Location {
+                                                    if (( $tempPGrid.SelectedObject.Dock -ne 'None' ) -or
                                            ( $tempPGrid.SelectedObject.Parent.GetType().Name -eq 'FlowLayoutPanel' ) -or
                                            (( $newElementType -eq 'Form' ) -and ( $tempPGrid.SelectedObject.StartPosition -ne 'Manual' )) -or
                                            ( $tempGI.GetPropertyTextValue() -eq '0, 0' )) {
-                                               $checkReflector = $false
-                                        }
-                                    }
-                                    Size {
-                                            # Only check reflector for Size when AutoSize is false and Dock not set to Fill
-                                        if (( $tempPGrid.SelectedObject.AutoSize -eq $true ) -or ( $tempPGrid.SelectedObject.Dock -eq 'Fill' )) {
-                                                # If control is disabled sometimes AutoSize will return $true even if $false
-                                            if (( $tempPGrid.SelectedObject.AutoSize -eq $true ) -and ( $tempPGrid.SelectedObject.Enabled -eq $false )) {
-                                                $tempPGrid.SelectedObject.Enabled = $true
+                                                        $checkReflector = $false
+                                                    }
+                                                }
+                                                Size {
+                                                    # Only check reflector for Size when AutoSize is false and Dock not set to Fill
+                                                    if (( $tempPGrid.SelectedObject.AutoSize -eq $true ) -or ( $tempPGrid.SelectedObject.Dock -eq 'Fill' )) {
+                                                        # If control is disabled sometimes AutoSize will return $true even if $false
+                                                        if (( $tempPGrid.SelectedObject.AutoSize -eq $true ) -and ( $tempPGrid.SelectedObject.Enabled -eq $false )) {
+                                                            $tempPGrid.SelectedObject.Enabled = $true
 
-                                                if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) {$newElement.SetAttribute($tempGI.PropertyLabel,$tempGI.GetPropertyTextValue())}
+                                                            if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) { $newElement.SetAttribute($tempGI.PropertyLabel, $tempGI.GetPropertyTextValue()) }
 
-                                                $tempPGrid.SelectedObject.Enabled = $false
-                                            }
+                                                            $tempPGrid.SelectedObject.Enabled = $false
+                                                        }
 
-                                            $checkReflector = $false
+                                                        $checkReflector = $false
 
-                                                # Textbox has an issue here
-                                            if (( $newElementType -eq 'Textbox' ) -and ( $tempPGrid.SelectedObject.Size.Width -ne 100 )) {$checkReflector = $true}
-                                        }
-                                            # Form has an issue here
-                                        if (( $newElementType -eq 'Form' ) -and ( $tempPGrid.SelectedObject.Size -eq (New-Object System.Drawing.Size(300,300)) )) {$checkReflector = $false}
-                                    }
-                                    FlatAppearance {
-                                        if ( $tempPGrid.SelectedObject.FlatStyle -eq 'Flat' ) {
-                                            $value = ''
+                                                        # Textbox has an issue here
+                                                        if (( $newElementType -eq 'Textbox' ) -and ( $tempPGrid.SelectedObject.Size.Width -ne 100 )) { $checkReflector = $true }
+                                                    }
+                                                    # Form has an issue here
+                                                    if (( $newElementType -eq 'Form' ) -and ( $tempPGrid.SelectedObject.Size -eq (New-Object System.Drawing.Size(300, 300)) )) { $checkReflector = $false }
+                                                }
+                                                FlatAppearance {
+                                                    if ( $tempPGrid.SelectedObject.FlatStyle -eq 'Flat' ) {
+                                                        $value = ''
 
-                                            $tempGI.GridItems.ForEach({
-                                                if ( $_.PropertyDescriptor.ShouldSerializeValue($_.Component.FlatAppearance) ) {$value += "$($_.PropertyLabel)=$($_.GetPropertyTextValue())|"}
-                                            })
+                                                        $tempGI.GridItems.ForEach({
+                                                                if ( $_.PropertyDescriptor.ShouldSerializeValue($_.Component.FlatAppearance) ) { $value += "$($_.PropertyLabel)=$($_.GetPropertyTextValue())|" }
+                                                            })
 
-                                            if ( $value -ne '' ) {$newElement.SetAttribute('FlatAppearance',$($value -replace "\|$"))}
-                                        }
+                                                        if ( $value -ne '' ) { $newElement.SetAttribute('FlatAppearance', $($value -replace "\|$")) }
+                                                    }
 
-                                        $checkReflector = $false
-                                    }
-                                    default {
-                                            # If property has a bad reflector and it has been changed manually add the attribute
-                                        if (( $Script:specialProps.BadReflector -contains $_ ) -and ( $null -ne $objRef.Changes[$_] )) {$newElement.SetAttribute($_,$objRef.Changes[$_])}
+                                                    $checkReflector = $false
+                                                }
+                                                default {
+                                                    # If property has a bad reflector and it has been changed manually add the attribute
+                                                    if (( $Script:specialProps.BadReflector -contains $_ ) -and ( $null -ne $objRef.Changes[$_] )) { $newElement.SetAttribute($_, $objRef.Changes[$_]) }
 
-                                        $checkReflector = $false
-                                    }
-                                }
-                            }
-
-                            if ( $checkReflector ) {
-                                if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) {
-                                    $newElement.SetAttribute($tempGI.PropertyLabel,$tempGI.GetPropertyTextValue())
-                                } elseif (( $newElementType -eq 'Form' ) -and ( $tempGI.PropertyLabel -eq 'Size') -and ( $tempPGrid.SelectedObject.AutoSize -eq $false )) {
-                                    $newElement.SetAttribute($tempGI.PropertyLabel,$tempGI.GetPropertyTextValue())
-                                }
-                            }
-
-                            [void]$currentNode.AppendChild($newElement)
-                        })
-
-                            # Set certain properties last
-                        $Script:specialProps.After.ForEach({
-                            $prop = $_
-                            $tempGI = $tempPGrid.SelectedGridItem.Parent.GridItems.Where({$_.PropertyLabel -eq $prop})
-
-                            if ( $tempGI.Count -gt 0 ) {
-                                if ( $Script:specialProps.Array -contains $prop ) {
-                                    if ( $prop -eq 'Items' ) {
-                                        if ( $objRef.Objects[$nodeName].Items.Count -gt 0 ) {
-                                            if ( @('CheckedListBox','ListBox','ComboBox','ToolStripComboBox') -contains $newElementType ) {
-                                                $value = ''
-
-                                                $objRef.Objects[$nodeName].Items.ForEach({$value += "$($_)|*BreakPT*|"})
-
-                                                $newElement.SetAttribute('Items',$($value -replace "\|\*BreakPT\*\|$"))
-                                            } else {
-                                                switch ($newElementType) {
-                                                    'MenuStrip' {}
-                                                    'ContextMenuStrip' {}
-                                                    #'ListView' {}
-                                                    default {if ( $ReturnXML -eq $false ) {[void][System.Windows.Forms.MessageBox]::Show("$($newElementType) items will not save",'Notification')}}
+                                                    $checkReflector = $false
                                                 }
                                             }
                                         }
-                                    } else {
-                                        if ( $objRef.Objects[$nodeName].$prop.Count -gt 0 ) {
-                                            $value = ''
 
-                                            $objRef.Objects[$nodeName].$prop.ForEach({$value += "$($_)|*BreakPT*|"})
-
-                                            $newElement.SetAttribute($prop,$($value -replace "\|\*BreakPT\*\|$"))
+                                        if ( $checkReflector ) {
+                                            if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) {
+                                                $newElement.SetAttribute($tempGI.PropertyLabel, $tempGI.GetPropertyTextValue())
+                                            } elseif (( $newElementType -eq 'Form' ) -and ( $tempGI.PropertyLabel -eq 'Size') -and ( $tempPGrid.SelectedObject.AutoSize -eq $false )) {
+                                                $newElement.SetAttribute($tempGI.PropertyLabel, $tempGI.GetPropertyTextValue())
+                                            }
                                         }
-                                    }
-                                } else {
-                                    if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) {$newElement.SetAttribute($tempGI.PropertyLabel,$tempGI.GetPropertyTextValue())}
+
+                                        [void]$currentNode.AppendChild($newElement)
+                                    })
+
+                                # Set certain properties last
+                                $Script:specialProps.After.ForEach({
+                                        $prop = $_
+                                        $tempGI = $tempPGrid.SelectedGridItem.Parent.GridItems.Where({ $_.PropertyLabel -eq $prop })
+
+                                        if ( $tempGI.Count -gt 0 ) {
+                                            if ( $Script:specialProps.Array -contains $prop ) {
+                                                if ( $prop -eq 'Items' ) {
+                                                    if ( $objRef.Objects[$nodeName].Items.Count -gt 0 ) {
+                                                        if ( @('CheckedListBox', 'ListBox', 'ComboBox', 'ToolStripComboBox') -contains $newElementType ) {
+                                                            $value = ''
+
+                                                            $objRef.Objects[$nodeName].Items.ForEach({ $value += "$($_)|*BreakPT*|" })
+
+                                                            $newElement.SetAttribute('Items', $($value -replace "\|\*BreakPT\*\|$"))
+                                                        } else {
+                                                            switch ($newElementType) {
+                                                                'MenuStrip' {}
+                                                                'ContextMenuStrip' {}
+                                                                #'ListView' {}
+                                                                default { if ( $ReturnXML -eq $false ) { [void][System.Windows.Forms.MessageBox]::Show("$($newElementType) items will not save", 'Notification') } }
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    if ( $objRef.Objects[$nodeName].$prop.Count -gt 0 ) {
+                                                        $value = ''
+
+                                                        $objRef.Objects[$nodeName].$prop.ForEach({ $value += "$($_)|*BreakPT*|" })
+
+                                                        $newElement.SetAttribute($prop, $($value -replace "\|\*BreakPT\*\|$"))
+                                                    }
+                                                }
+                                            } else {
+                                                if ( $tempGI.PropertyDescriptor.ShouldSerializeValue($tempGI.Component) ) { $newElement.SetAttribute($tempGI.PropertyLabel, $tempGI.GetPropertyTextValue()) }
+                                            }
+                                        }
+                                    })
+
+                                # Set assigned Events
+                                if ( $objRef.Events[$nodeName] ) {
+                                    $newEventElement = $xml.CreateElement($newElementType)
+                                    $newEventElement.SetAttribute('Name', $nodeName)
+                                    $newEventElement.SetAttribute('Root', "$($objRef.RootType)|$rootControlName")
+
+                                    $eventString = ''
+                                    $objRef.Events[$nodeName].ForEach({ $eventString += "$($_) " })
+
+                                    $newEventElement.SetAttribute('Events', $($eventString -replace " $"))
+
+                                    [void]$xml.Data.Events.AppendChild($newEventElement)
                                 }
-                            }
-                        })
 
-                            # Set assigned Events
-                        if ( $objRef.Events[$nodeName] ) {
-                            $newEventElement = $xml.CreateElement($newElementType)
-                            $newEventElement.SetAttribute('Name',$nodeName)
-                            $newEventElement.SetAttribute('Root',"$($objRef.RootType)|$rootControlName")
+                                # Set $currentNode for the next iteration
+                                if ( $_ -lt ($nodeIndex.Count - 1) ) {
+                                    [int]$nextNodeDepth = "$($nodeIndex[($_+1)] -replace ":.*$")"
 
-                            $eventString = ''
-                            $objRef.Events[$nodeName].ForEach({$eventString += "$($_) "})
-
-                            $newEventElement.SetAttribute('Events',$($eventString -replace " $"))
-
-                            [void]$xml.Data.Events.AppendChild($newEventElement)
-                        }
-
-                            # Set $currentNode for the next iteration
-                        if ( $_ -lt ($nodeIndex.Count-1) ) {
-                            [int]$nextNodeDepth = "$($nodeIndex[($_+1)] -replace ":.*$")"
-
-                            if ( $nextNodeDepth -gt $nodeDepth ) {$currentNode = $newElement}
-                            elseif ( $nextNodeDepth -lt $nodeDepth ) {@(($nodeDepth-1)..$nextNodeDepth).ForEach({$currentNode = $currentNode.ParentNode})}
-                        }
+                                    if ( $nextNodeDepth -gt $nodeDepth ) { $currentNode = $newElement }
+                                    elseif ( $nextNodeDepth -lt $nodeDepth ) { @(($nodeDepth - 1)..$nextNodeDepth).ForEach({ $currentNode = $currentNode.ParentNode }) }
+                                }
+                            })
                     })
-                })
 
-                if ( $ReturnXML ) {return $xml}
+                if ( $ReturnXML ) { return $xml }
                 else {
                     $xml.Save("$($Script:projectsDir)\$($projectName)")
 
                     $refs['tpg_Form1'].Text = $projectName
 
-                    if ( $Suppress -eq $false ) {[void][System.Windows.Forms.MessageBox]::Show('Successfully Saved!','Success')}
+                    if ( $Suppress -eq $false ) { [void][System.Windows.Forms.MessageBox]::Show('Successfully Saved!', 'Success') }
                 }
             } catch {
                 if ( $ReturnXML ) {
                     Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while generating Form XML."
                     return $xml
-                }
-                else {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while saving project."}
+                } else { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while saving project." }
             } finally {
-                if ( $tempPGrid ) {$tempPGrid.Dispose()}
+                if ( $tempPGrid ) { $tempPGrid.Dispose() }
             }
-        } else {throw 'SaveCancelled'}
+        } else { throw 'SaveCancelled' }
     }
     
     #endregion Functions
@@ -885,39 +884,39 @@ $sbGUI = {
     #region Event ScriptBlocks
 
     $eventSB = @{
-        'MainForm' = @{
+        'MainForm'             = @{
             FormClosing = {
                 try {
                     $Script:refs['TreeView'].Nodes.ForEach({
-                        $controlName = $_.Name
-                        $controlType = $_.Text -replace " - .*$"
+                            $controlName = $_.Name
+                            $controlType = $_.Text -replace " - .*$"
 
-                        if ( $controlType -eq 'Form' ) {$Script:refsFID.Form.Objects[$controlName].Dispose()}
-                        else {$Script:refsFID[$controlType][$controlName].Objects[$controlName].Dispose()}
-                    })
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form closure."}
+                            if ( $controlType -eq 'Form' ) { $Script:refsFID.Form.Objects[$controlName].Dispose() }
+                            else { $Script:refsFID[$controlType][$controlName].Objects[$controlName].Dispose() }
+                        })
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form closure." }
             }
         }
-        'New' = @{
+        'New'                  = @{
             Click = {
                 try {
                     if ( [System.Windows.Forms.MessageBox]::Show("Unsaved changes to the current project will be lost.  Are you sure you want to start a new project?", 'Confirm', 4) -eq 'Yes' ) {
                         $Script:refs['TreeView'].Nodes.ForEach({
-                            $controlName = $_.Name
-                            $controlType = $_.Text -replace " - .*$"
+                                $controlName = $_.Name
+                                $controlType = $_.Text -replace " - .*$"
 
-                            if ( $controlType -eq 'Form' ) {$Script:refsFID.Form.Objects[$controlName].Dispose()}
-                            else {$Script:refsFID[$controlType][$controlName].Objects[$ControlName].Dispose()}
-                        })
+                                if ( $controlType -eq 'Form' ) { $Script:refsFID.Form.Objects[$controlName].Dispose() }
+                                else { $Script:refsFID[$controlType][$controlName].Objects[$ControlName].Dispose() }
+                            })
 
                         $Script:refs['TreeView'].Nodes.Clear()
 
                         Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName MainForm
                     }
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during start of New Project."}
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during start of New Project." }
             }
         }
-        'Open' = @{
+        'Open'                 = @{
             Click = {
                 if ( [System.Windows.Forms.MessageBox]::Show("You will lose all changes to the current project.  Are you sure?", 'Confirm', 4) -eq 'Yes' ) {
                     $openDialog = ConvertFrom-WinFormsXML -Xml @"
@@ -935,18 +934,18 @@ $sbGUI = {
                                 $Script:refs['TreeView'].BeginUpdate()
 
                                 $Script:refs['TreeView'].Nodes.ForEach({
-                                    $controlName = $_.Name
-                                    $controlType = $_.Text -replace " - .*$"
+                                        $controlName = $_.Name
+                                        $controlType = $_.Text -replace " - .*$"
 
-                                    if ( $controlType -eq 'Form' ) {$Script:refsFID.Form.Objects[$controlName].Dispose()}
-                                    else {$Script:refsFID[$controlType][$controlName].Objects[$ControlName].Dispose()}
-                                })
+                                        if ( $controlType -eq 'Form' ) { $Script:refsFID.Form.Objects[$controlName].Dispose() }
+                                        else { $Script:refsFID[$controlType][$controlName].Objects[$ControlName].Dispose() }
+                                    })
 
                                 $Script:refs['TreeView'].Nodes.Clear()
 
                                 Convert-XmlToTreeView -XML $_.Data.Form -TreeObject $Script:refs['TreeView']
 
-                                $_.Data.ChildNodes.Where({$_.ToString() -notmatch 'Form' -and $_.ToString() -notmatch 'Events'}) | ForEach-Object {Convert-XmlToTreeView -XML $_ -TreeObject $Script:refs['TreeView']}
+                                $_.Data.ChildNodes.Where({ $_.ToString() -notmatch 'Form' -and $_.ToString() -notmatch 'Events' }) | ForEach-Object { Convert-XmlToTreeView -XML $_ -TreeObject $Script:refs['TreeView'] }
 
                                 $Script:refs['TreeView'].EndUpdate()
 
@@ -958,10 +957,10 @@ $sbGUI = {
 
                                         if ( $rootControlType -eq 'Form' ) {
                                             $Script:refsFID.Form.Events[$controlName] = @()
-                                            $_.Events.Split(' ') | ForEach-Object {$Script:refsFID.Form.Events[$controlName] += $_}
+                                            $_.Events.Split(' ') | ForEach-Object { $Script:refsFID.Form.Events[$controlName] += $_ }
                                         } else {
                                             $Script:refsFID[$rootControlType][$rootControlName].Events[$controlName] = @()
-                                            $_.Events.Split(' ') | ForEach-Object {$Script:refsFID[$rootControlType][$rootControlName].Events[$controlName] += $_}
+                                            $_.Events.Split(' ') | ForEach-Object { $Script:refsFID[$rootControlType][$rootControlName].Events[$controlName] += $_ }
                                         }
                                     }
                                 }
@@ -986,7 +985,7 @@ $sbGUI = {
                         $Script:refsFID.Form.Objects[$($Script:refs['TreeView'].Nodes | Where-Object { $_.Text -match "^Form - " }).Name].Visible = $true
                         $Script:refs['tpg_Form1'].Text = "$($openDialog.FileName -replace "^.*\\")"
                         $Script:refs['TreeView'].SelectedNode = $Script:refs['TreeView'].Nodes | Where-Object { $_.Text -match "^Form - " }
-                    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while opening $($fileName)."}
+                    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while opening $($fileName)." }
                     finally {
                         $Script:openingProject = $false
 
@@ -998,7 +997,7 @@ $sbGUI = {
                 }
             }
         }
-        'Rename' = @{
+        'Rename'               = @{
             Click = {
                 if ( $Script:refs['TreeView'].SelectedNode.Text -notmatch "^SplitterPanel" ) {
                     $currentName = $Script:refs['TreeView'].SelectedNode.Name
@@ -1025,92 +1024,92 @@ $sbGUI = {
                             }
 
                             $objRef.TreeNodes[$currentName].Name = $newName
-                            $objRef.TreeNodes[$currentName].Text = $Script:refs['TreeView'].SelectedNode.Text -replace "-.*$","- $($newName)"
+                            $objRef.TreeNodes[$currentName].Text = $Script:refs['TreeView'].SelectedNode.Text -replace "-.*$", "- $($newName)"
                             $objRef.TreeNodes[$newName] = $objRef.TreeNodes[$currentName]
                             $objRef.TreeNodes.Remove($currentName)
 
                             if ( $objRef.TreeNodes[$newName].Text -match "^SplitContainer" ) {
-                                @('Panel1','Panel2').ForEach({
-                                    $objRef.Objects["$($currentName)_$($_)"].Name = "$($newName)_$($_)"
-                                    $objRef.Objects["$($newName)_$($_)"] = $objRef.Objects["$($currentName)_$($_)"]
-                                    $objRef.Objects.Remove("$($currentName)_$($_)")
+                                @('Panel1', 'Panel2').ForEach({
+                                        $objRef.Objects["$($currentName)_$($_)"].Name = "$($newName)_$($_)"
+                                        $objRef.Objects["$($newName)_$($_)"] = $objRef.Objects["$($currentName)_$($_)"]
+                                        $objRef.Objects.Remove("$($currentName)_$($_)")
 
-                                    if ( $objRef.Changes["$($currentName)_$($_)"] ) {
-                                        $objRef.Changes["$($newName)_$($_)"] = $objRef.Changes["$($currentName)_$($_)"]
-                                        $objRef.Changes.Remove("$($currentName)_$($_)")
-                                    }
+                                        if ( $objRef.Changes["$($currentName)_$($_)"] ) {
+                                            $objRef.Changes["$($newName)_$($_)"] = $objRef.Changes["$($currentName)_$($_)"]
+                                            $objRef.Changes.Remove("$($currentName)_$($_)")
+                                        }
 
-                                    if ( $objRef.Events["$($currentName)_$($_)"] ) {
-                                        $objRef.Events["$($newName)_$($_)"] = $objRef.Events["$($currentName)_$($_)"]
-                                        $objRef.Events.Remove("$($currentName)_$($_)")
-                                    }
+                                        if ( $objRef.Events["$($currentName)_$($_)"] ) {
+                                            $objRef.Events["$($newName)_$($_)"] = $objRef.Events["$($currentName)_$($_)"]
+                                            $objRef.Events.Remove("$($currentName)_$($_)")
+                                        }
 
-                                    $objRef.TreeNodes["$($currentName)_$($_)"].Name = "$($newName)_$($_)"
-                                    $objRef.TreeNodes["$($currentName)_$($_)"].Text = $Script:refs['TreeView'].SelectedNode.Text -replace "-.*$","- $($newName)_$($_)"
-                                    $objRef.TreeNodes["$($newName)_$($_)"] = $objRef.TreeNodes["$($currentName)_$($_)"]
-                                    $objRef.TreeNodes.Remove("$($currentName)_$($_)")
-                                })
+                                        $objRef.TreeNodes["$($currentName)_$($_)"].Name = "$($newName)_$($_)"
+                                        $objRef.TreeNodes["$($currentName)_$($_)"].Text = $Script:refs['TreeView'].SelectedNode.Text -replace "-.*$", "- $($newName)_$($_)"
+                                        $objRef.TreeNodes["$($newName)_$($_)"] = $objRef.TreeNodes["$($currentName)_$($_)"]
+                                        $objRef.TreeNodes.Remove("$($currentName)_$($_)")
+                                    })
                             }
-                        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered renaming '$($Script:refs['TreeView'].SelectedNode.Text)'."}
+                        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered renaming '$($Script:refs['TreeView'].SelectedNode.Text)'." }
                     }
-                } else {[void][System.Windows.Forms.MessageBox]::Show("Cannot perform any action from the 'Edit' Menu against a SplitterPanel control.",'Restricted Action')}
+                } else { [void][System.Windows.Forms.MessageBox]::Show("Cannot perform any action from the 'Edit' Menu against a SplitterPanel control.", 'Restricted Action') }
             }
         }
-        'Delete' = @{
+        'Delete'               = @{
             Click = {
                 if ( $Script:refs['TreeView'].SelectedNode.Text -notmatch "^SplitterPanel" ) {
                     try {
                         $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
                         
                         if (( $objRef.Success -eq $true ) -and ( $Script:refs['TreeView'].SelectedNode.Level -ne 0 ) -or ( $objRef.RootType -ne 'Form' )) {
-                            if ( [System.Windows.Forms.MessageBox]::Show("Are you sure you wish to remove the selected node and all child nodes? This cannot be undone." ,"Confirm Removal" , 4) -eq 'Yes' ) {
-                                    # Generate array of TreeNodes to delete
+                            if ( [System.Windows.Forms.MessageBox]::Show("Are you sure you wish to remove the selected node and all child nodes? This cannot be undone." , "Confirm Removal" , 4) -eq 'Yes' ) {
+                                # Generate array of TreeNodes to delete
                                 $nodesToDelete = @($($Script:refs['TreeView'].SelectedNode).Name)
                                 $nodesToDelete += Get-ChildNodeList -TreeNode $Script:refs['TreeView'].SelectedNode
                                 
-                                (($nodesToDelete.Count-1)..0).ForEach({
+                                (($nodesToDelete.Count - 1)..0).ForEach({
                                         # If the node is currently copied remove nodeClipboard
-                                    if ( $objRef.TreeNodes[$nodesToDelete[$_]] -eq $Script:nodeClipboard.Node ) {
-                                        $Script:nodeClipboard = $null
-                                        Remove-Variable -Name nodeClipboard -Scope Script
-                                    }
+                                        if ( $objRef.TreeNodes[$nodesToDelete[$_]] -eq $Script:nodeClipboard.Node ) {
+                                            $Script:nodeClipboard = $null
+                                            Remove-Variable -Name nodeClipboard -Scope Script
+                                        }
 
                                         # Dispose of the Form control and remove it from the Form object
-                                    if ( $objRef.TreeNodes[$nodesToDelete[$_]].Text -notmatch "^SplitterPanel" ) {$objRef.Objects[$nodesToDelete[$_]].Dispose()}
-                                    $objRef.Objects.Remove($nodesToDelete[$_])
+                                        if ( $objRef.TreeNodes[$nodesToDelete[$_]].Text -notmatch "^SplitterPanel" ) { $objRef.Objects[$nodesToDelete[$_]].Dispose() }
+                                        $objRef.Objects.Remove($nodesToDelete[$_])
 
                                         # Remove the actual TreeNode from the TreeView control and remove it from the Form object
-                                    $objRef.TreeNodes[$nodesToDelete[$_]].Remove()
-                                    $objRef.TreeNodes.Remove($nodesToDelete[$_])
+                                        $objRef.TreeNodes[$nodesToDelete[$_]].Remove()
+                                        $objRef.TreeNodes.Remove($nodesToDelete[$_])
 
                                         # Remove any changes or assigned events associated with the deleted TreeNodes from the Form object
-                                    if ( $objRef.Changes[$nodesToDelete[$_]] ) {$objRef.Changes.Remove($nodesToDelete[$_])}
-                                    if ( $objRef.Events[$nodesToDelete[$_]] ) {$objRef.Events.Remove($nodesToDelete[$_])}
-                                })
+                                        if ( $objRef.Changes[$nodesToDelete[$_]] ) { $objRef.Changes.Remove($nodesToDelete[$_]) }
+                                        if ( $objRef.Events[$nodesToDelete[$_]] ) { $objRef.Events.Remove($nodesToDelete[$_]) }
+                                    })
                             }
-                        } else {[void][System.Windows.Forms.MessageBox]::Show('Cannot delete the root Form.  Start a New Project instead.')}
-                    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered deleting '$($Script:refs['TreeView'].SelectedNode.Text)'."}
-                } else {[void][System.Windows.Forms.MessageBox]::Show("Cannot perform any action from the 'Edit' Menu against a SplitterPanel control.",'Restricted Action')}
+                        } else { [void][System.Windows.Forms.MessageBox]::Show('Cannot delete the root Form.  Start a New Project instead.') }
+                    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered deleting '$($Script:refs['TreeView'].SelectedNode.Text)'." }
+                } else { [void][System.Windows.Forms.MessageBox]::Show("Cannot perform any action from the 'Edit' Menu against a SplitterPanel control.", 'Restricted Action') }
             }
         }
-        'CopyNode' = @{
+        'CopyNode'             = @{
             Click = {
                 if ( $Script:refs['TreeView'].SelectedNode.Level -gt 0 ) {
                     $Script:nodeClipboard = @{
                         ObjRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
-                        Node = $Script:refs['TreeView'].SelectedNode
+                        Node   = $Script:refs['TreeView'].SelectedNode
                     }
-                } else {[void][System.Windows.Forms.MessageBox]::Show('You cannot copy a root node.  It will be necessary to copy each individual subnode separately after creating the root node manually.')}
+                } else { [void][System.Windows.Forms.MessageBox]::Show('You cannot copy a root node.  It will be necessary to copy each individual subnode separately after creating the root node manually.') }
             }
         }
-        'PasteNode' = @{
+        'PasteNode'            = @{
             Click = {
                 try {
                     if ( $Script:nodeClipboard ) {
                         $pastedObjType = $Script:nodeClipboard.Node.Text -replace " - .*$"
                         $currentObjType = $Script:refs['TreeView'].SelectedNode.Text -replace " - .*$"
 
-                        if ( $Script:supportedControls.Where({$_.Name -eq $currentObjType}).ChildTypes -contains $Script:supportedControls.Where({$_.Name -eq $pastedObjType}).Type ) {
+                        if ( $Script:supportedControls.Where({ $_.Name -eq $currentObjType }).ChildTypes -contains $Script:supportedControls.Where({ $_.Name -eq $pastedObjType }).Type ) {
                             $pastedObjName = $Script:nodeClipboard.Node.Name
                             $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
 
@@ -1122,19 +1121,19 @@ $sbGUI = {
 
                             if (( $objRef.RootType -eq $Script:nodeClipboard.ObjRef.RootType ) -and ( $objRef.RootName -eq $Script:nodeClipboard.ObjRef.RootName )) {
                                 [array]$newNodeNames = Convert-XmlToTreeView -TreeObject $Script:refs['TreeView'].SelectedNode -Xml $pastedXml.Node -IncrementName
-                            } else {[array]$newNodeNames = Convert-XmlToTreeView -TreeObject $Script:refs['TreeView'].SelectedNode -Xml $pastedXml.Node}
+                            } else { [array]$newNodeNames = Convert-XmlToTreeView -TreeObject $Script:refs['TreeView'].SelectedNode -Xml $pastedXml.Node }
 
                             $Script:refs['TreeView'].EndUpdate()
 
                             Move-SButtons -Object $refs['PropertyGrid'].SelectedObject
 
-                            $newNodeNames.ForEach({if ( $Script:nodeClipboard.ObjRef.Events["$($_.OldName)"] ) {$objRef.Events["$($_.NewName)"] = $Script:nodeClipboard.ObjRef.Events["$($_.OldName)"]}})
-                        } else {[void][System.Windows.Forms.MessageBox]::Show("You cannot paste a $($pastedObjType) control to the selected control type $($currentObjType).")}
+                            $newNodeNames.ForEach({ if ( $Script:nodeClipboard.ObjRef.Events["$($_.OldName)"] ) { $objRef.Events["$($_.NewName)"] = $Script:nodeClipboard.ObjRef.Events["$($_.OldName)"] } })
+                        } else { [void][System.Windows.Forms.MessageBox]::Show("You cannot paste a $($pastedObjType) control to the selected control type $($currentObjType).") }
                     }
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered while pasting node from clipboard.'}
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered while pasting node from clipboard.' }
             }
         }
-        'Move Up' = @{
+        'Move Up'              = @{
             Click = {
                 try {
                     $selectedNode = $Script:refs['TreeView'].SelectedNode
@@ -1147,15 +1146,15 @@ $sbGUI = {
                         $clone = $selectedNode.Clone()
 
                         $parentNode.Nodes.Remove($selectedNode)
-                        $parentNode.Nodes.Insert($($nodeIndex-1),$clone)
+                        $parentNode.Nodes.Insert($($nodeIndex - 1), $clone)
 
-                        $objRef.TreeNodes[$nodeName] = $parentNode.Nodes[$($nodeIndex-1)]
+                        $objRef.TreeNodes[$nodeName] = $parentNode.Nodes[$($nodeIndex - 1)]
                         $Script:refs['TreeView'].SelectedNode = $objRef.TreeNodes[$nodeName]
                     }
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered increasing index of TreeNode.'}
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered increasing index of TreeNode.' }
             }
         }
-        'Move Down' = @{
+        'Move Down'            = @{
             Click = {
                 try {
                     $selectedNode = $Script:refs['TreeView'].SelectedNode
@@ -1168,13 +1167,13 @@ $sbGUI = {
                         $clone = $selectedNode.Clone()
 
                         $parentNode.Nodes.Remove($selectedNode)
-                        if ( $nodeIndex -eq $($parentNode.Nodes.Count - 1) ) {$parentNode.Nodes.Add($clone)}
-                        else {$parentNode.Nodes.Insert($($nodeIndex+1),$clone)}
+                        if ( $nodeIndex -eq $($parentNode.Nodes.Count - 1) ) { $parentNode.Nodes.Add($clone) }
+                        else { $parentNode.Nodes.Insert($($nodeIndex + 1), $clone) }
 
-                        $objRef.TreeNodes[$nodeName] = $parentNode.Nodes[$($nodeIndex+1)]
+                        $objRef.TreeNodes[$nodeName] = $parentNode.Nodes[$($nodeIndex + 1)]
                         $Script:refs['TreeView'].SelectedNode = $objRef.TreeNodes[$nodeName]
                     }
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered decreasing index of TreeNode.'}
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered decreasing index of TreeNode.' }
             }
         }
         'Generate Script File' = @{
@@ -1183,10 +1182,10 @@ $sbGUI = {
                     try {
                         Save-Project -Suppress
 
-                            # If the generate child form doesn't already exist, create it. It only gets created once, so does not reset each time called
+                        # If the generate child form doesn't already exist, create it. It only gets created once, so does not reset each time called
                         if ( $null -eq $Script:refsGenerate ) {
                             Get-CustomControl -ControlInfo $Script:childFormInfo['Generate'] -Reference refsGenerate
-                                # Now that it's created it can be removed from $childFormInfo
+                            # Now that it's created it can be removed from $childFormInfo
                             $Script:childFormInfo.Remove('Generate')
                         }
 
@@ -1199,47 +1198,47 @@ $sbGUI = {
 
                         $xmlText = Get-Content -Path "$($projectFilePath)"
                         [xml]$xml = $xmlText
-                            # Disable checkboxes based on necessity
-                        if ( $xml.Data.Events.ChildNodes.Count -gt 0 ) {$Script:refsGenerate['cbx_Events'].Enabled = $true} else {$Script:refsGenerate['cbx_Events'].Enabled = $false}
-                        if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) {$Script:refsGenerate['cbx_ChildForms'].Enabled = $true} else {$Script:refsGenerate['cbx_ChildForms'].Enabled = $false}
-                        if ( $xml.Data.ContextMenuStrip ) {$Script:refsGenerate['cbx_ReuseContext'].Enabled = $true} else {$Script:refsGenerate['cbx_ReuseContext'].Enabled = $false}
-                        if ( $xml.Data.Timer ) {$Script:refsGenerate['cbx_Timers'].Enabled = $true} else {$Script:refsGenerate['cbx_Timers'].Enabled = $false}
-                        if ( $xml.Data.ChildNodes.ToString() -match "Dialog$" ) {$Script:refsGenerate['cbx_Dialogs'].Enabled = $true} else {$Script:refsGenerate['cbx_Dialogs'].Enabled = $false}
+                        # Disable checkboxes based on necessity
+                        if ( $xml.Data.Events.ChildNodes.Count -gt 0 ) { $Script:refsGenerate['cbx_Events'].Enabled = $true } else { $Script:refsGenerate['cbx_Events'].Enabled = $false }
+                        if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) { $Script:refsGenerate['cbx_ChildForms'].Enabled = $true } else { $Script:refsGenerate['cbx_ChildForms'].Enabled = $false }
+                        if ( $xml.Data.ContextMenuStrip ) { $Script:refsGenerate['cbx_ReuseContext'].Enabled = $true } else { $Script:refsGenerate['cbx_ReuseContext'].Enabled = $false }
+                        if ( $xml.Data.Timer ) { $Script:refsGenerate['cbx_Timers'].Enabled = $true } else { $Script:refsGenerate['cbx_Timers'].Enabled = $false }
+                        if ( $xml.Data.ChildNodes.ToString() -match "Dialog$" ) { $Script:refsGenerate['cbx_Dialogs'].Enabled = $true } else { $Script:refsGenerate['cbx_Dialogs'].Enabled = $false }
 
                         if ( $Script:refsGenerate['Generate'].ShowDialog() -eq 'OK' ) {
-                            if ( (Test-Path -Path "$($generationPath)" -PathType Container) -eq $false ) {New-Item -Path "$($generationPath)" -ItemType Directory | Out-Null}
+                            if ( (Test-Path -Path "$($generationPath)" -PathType Container) -eq $false ) { New-Item -Path "$($generationPath)" -ItemType Directory | Out-Null }
 
                             if ( $xmlText -match "^  </Form>" ) {
-                                $indexFormStart = [array]::IndexOf($xmlText,$xmlText -match "^  <Form ")
-                                $indexFormEnd = [array]::IndexOf($xmlText,"  </Form>")
+                                $indexFormStart = [array]::IndexOf($xmlText, $xmlText -match "^  <Form ")
+                                $indexFormEnd = [array]::IndexOf($xmlText, "  </Form>")
                                 $formText = $xmlText[$($indexFormStart)..$($indexFormEnd)]
-                            } else {$formText = $xmlText -match "^  <Form "}
+                            } else { $formText = $xmlText -match "^  <Form " }
 
-                                # Start script generation
+                            # Start script generation
                             $scriptText = New-Object System.Collections.Generic.List[String]
 
                             #$scriptText.AddRange($Script:templateText.Notes)
-                            $Script:templateText.Notes.ForEach({$scriptText.Add($_)})
+                            $Script:templateText.Notes.ForEach({ $scriptText.Add($_) })
 
-                            $scriptText[3] = $scriptText[3] -replace 'FNAME',"$($projectName -replace "fbs$","ps1")"
-                            $scriptText[4] = $scriptText[4] -replace 'NETNAME',"$($env:USERNAME)"
-                            $scriptText[5] = $scriptText[5] -replace "  DATE","  $(Get-Date -Format 'yyyy/MM/dd')"
-                            $scriptText[6] = $scriptText[6] -replace "  DATE","  $(Get-Date -Format 'yyyy/MM/dd')"
+                            $scriptText[3] = $scriptText[3] -replace 'FNAME', "$($projectName -replace "fbs$","ps1")"
+                            $scriptText[4] = $scriptText[4] -replace 'NETNAME', "$($env:USERNAME)"
+                            $scriptText[5] = $scriptText[5] -replace "  DATE", "  $(Get-Date -Format 'yyyy/MM/dd')"
+                            $scriptText[6] = $scriptText[6] -replace "  DATE", "  $(Get-Date -Format 'yyyy/MM/dd')"
 
-                            $Script:templateText.Start_STAScriptBlock.ForEach({$scriptText.Add($_)})
+                            $Script:templateText.Start_STAScriptBlock.ForEach({ $scriptText.Add($_) })
 
-                                # Functions
-                            $Script:templateText.StartRegion_Functions.ForEach({$scriptText.Add($_)})
+                            # Functions
+                            $Script:templateText.StartRegion_Functions.ForEach({ $scriptText.Add($_) })
 
-                            $Script:templateText.Function_Update_ErrorLog.ForEach({$scriptText.Add($_)})
-                            $Script:templateText.Function_ConvertFrom_WinFormsXML.ForEach({$scriptText.Add($_)})
-                            if (( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) -or ( $xml.Data.ChildNodes.Count -gt 3 )) {$Script:templateText.Function_Get_CustomControl.ForEach({$scriptText.Add($_)})}
+                            $Script:templateText.Function_Update_ErrorLog.ForEach({ $scriptText.Add($_) })
+                            $Script:templateText.Function_ConvertFrom_WinFormsXML.ForEach({ $scriptText.Add($_) })
+                            if (( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) -or ( $xml.Data.ChildNodes.Count -gt 3 )) { $Script:templateText.Function_Get_CustomControl.ForEach({ $scriptText.Add($_) }) }
 
-                            $Script:templateText.EndRegion_Functions.ForEach({$scriptText.Add($_)})
+                            $Script:templateText.EndRegion_Functions.ForEach({ $scriptText.Add($_) })
 
-                                # Event Scriptblocks
+                            # Event Scriptblocks
                             if ( $($xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" }) ) {
-                                $Script:templateText.StartRegion_Events.ForEach({$scriptText.Add($_)})
+                                $Script:templateText.StartRegion_Events.ForEach({ $scriptText.Add($_) })
 
                                 $xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" } | ForEach-Object {
                                     $name = $_.Name
@@ -1249,123 +1248,60 @@ $sbGUI = {
                                     $_.Events -Split ' ' | ForEach-Object {
                                         ([string[]]`
                                             "            $_ = {",
-                                            "",
-                                            "            }"
-                                        ).ForEach({$scriptText.Add($_)})
+                                        "",
+                                        "            }"
+                                        ).ForEach({ $scriptText.Add($_) })
                                     }
 
                                     $scriptText.Add("        }")
                                 }
 
-                                $Script:templateText.EndRegion_Events.ForEach({$scriptText.Add($_)})
+                                $Script:templateText.EndRegion_Events.ForEach({ $scriptText.Add($_) })
                             }
                             
-                                # Child Forms
+                            # Child Forms
                             if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) {
-                                $Script:templateText.StartRegion_ChildForms.ForEach({$scriptText.Add($_)})
+                                $Script:templateText.StartRegion_ChildForms.ForEach({ $scriptText.Add($_) })
 
                                 (1..$(($Script:refsGenerate['gbx_ChildForms'].Controls | Where-Object { $_.Name -match "tbx_ChildForm" }).Count - 1)).ForEach({
-                                    $controlName = "tbx_ChildForm$($_)"
+                                        $controlName = "tbx_ChildForm$($_)"
 
-                                    $childXmlText = Get-Content -Path "$($($Script:refsGenerate['gbx_ChildForms'].Controls[$controlName]).Tag)"
+                                        $childXmlText = Get-Content -Path "$($($Script:refsGenerate['gbx_ChildForms'].Controls[$controlName]).Tag)"
 
-                                    $indexFormStart = [array]::IndexOf($childXmlText,$childXmlText -match "^  <Form ")
-                                    $indexFormEnd = [array]::IndexOf($childXmlText,"  </Form>")
-                                    $childFormText = $childXmlText[$($indexFormStart)..$($indexFormEnd)]
+                                        $indexFormStart = [array]::IndexOf($childXmlText, $childXmlText -match "^  <Form ")
+                                        $indexFormEnd = [array]::IndexOf($childXmlText, "  </Form>")
+                                        $childFormText = $childXmlText[$($indexFormStart)..$($indexFormEnd)]
 
-                                    $childXml = New-Object -TypeName Xml
-                                    $childXml.LoadXml($childXmlText)
+                                        $childXml = New-Object -TypeName Xml
+                                        $childXml.LoadXml($childXmlText)
 
-                                    $childFormName = $childXml.Data.Form.Name
+                                        $childFormName = $childXml.Data.Form.Name
 
                                     ([string[]]`
-                                        "        '$childFormName' = @{",
+                                            "        '$childFormName' = @{",
                                         "            XMLText = @`""
-                                    ).ForEach({$scriptText.Add($_)})
+                                    ).ForEach({ $scriptText.Add($_) })
 
-                                    $childFormText.ForEach({$scriptText.Add($_)})
+                                        $childFormText.ForEach({ $scriptText.Add($_) })
 
-                                    $scriptText.Add("`"@")
+                                        $scriptText.Add("`"@")
 
-                                    if ( ($childXml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" }) ) {
-                                        $scriptText.Add('            Events = @(')
+                                        if ( ($childXml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" }) ) {
+                                            $scriptText.Add('            Events = @(')
 
-                                        $childXml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" } | ForEach-Object {
-                                            $name = $_.Name
+                                            $childXml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" } | ForEach-Object {
+                                                $name = $_.Name
 
-                                            $_.Events -Split ' ' | ForEach-Object {
+                                                $_.Events -Split ' ' | ForEach-Object {
                                                 ([string[]]`
-                                                    "                [pscustomobject]@{",
+                                                        "                [pscustomobject]@{",
                                                     "                    Name = '$($name)'",
                                                     "                    EventType = '$($_)'",
                                                     "                    ScriptBlock = {",
                                                     "",
                                                     "                    }",
                                                     "                },"
-                                                ).ForEach({$scriptText.Add($_)})
-                                            }
-                                        }
-
-                                        $scriptText[-1] = $scriptText[-1] -replace ","
-
-                                        $scriptText.Add("            )")
-                                        $scriptText.Add("        }")
-                                    }
-                                })
-
-                                $Script:templateText.EndRegion_ChildForms.ForEach({$scriptText.Add($_)})
-                            }
-
-                                # Timers / Reusable ContextMenuStrips
-                            $dialogRegionStarted = $false
-                            $dialogCount = 0
-
-                            (@('Timer','ContextMenuStrip') + $supportedControls.Where({$_.Name -match "Dialog$"}).Name).ForEach({
-                                $childTypeName = $_
-
-                                if ( $xml.Data.$childTypeName ) {
-                                    if ( $childTypeName -match "Dialog$" ) {
-                                        if ( $dialogRegionStarted -eq $false ) {
-                                            $Script:templateText.StartRegion_Dialogs.ForEach({$scriptText.Add($_)})
-                                            $dialogCountMax = $xml.Data.ChildNodes.Where({$_.ToString() -match "Dialog$"}).Count
-                                        }
-                                    } else {$Script:templateText."StartRegion_$($childTypeName)s".ForEach({$scriptText.Add($_)})}
-
-                                    $xml.Data.$childTypeName | ForEach-Object {
-                                        $controlName = $_.Name
-                                        $startIndex = [array]::IndexOf($xmlText,$xmlText -match "^  <$($childTypeName) Name=`"$($controlName)`"")
-                                        $keepProcessing = $true
-                                        $controlText = @()
-
-                                        ($startIndex..$($xmlText.Count - 2)).ForEach({
-                                            if ( $keepProcessing ) {
-                                                if (( $xmlText[$_] -eq "  </$($childTypeName)>" ) -or ( $xmlText[$_] -match "^  <$($childTypeName).*/>$" )) {$keepProcessing = $false}
-
-                                                $controlText += $xmlText[$_]
-                                            }
-                                        })
-
-                                        $scriptText.Add("        '$controlName' = @{")
-                                        $scriptText.Add("            XMLText = @`"")
-                                        $controlText | ForEach-Object {$scriptText.Add($_)}
-                                        $scriptText.Add("`"@")
-
-                                        if ( $xml.Data.Events.ChildNodes | Where-Object { $_.Root -eq "$($childTypeName)|$($controlName)" } ) {
-                                            $scriptText.Add('            Events = @(')
-
-                                            $xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "$($childTypeName)|$($controlName)" } | ForEach-Object {
-                                                $name = $_.Name
-
-                                                $_.Events -Split ' ' | ForEach-Object {
-                                                    ([string[]]`
-                                                        "                [pscustomobject]@{",
-                                                        "                    Name = '$($name)'",
-                                                        "                    EventType = '$($_)'",
-                                                        "                    ScriptBlock = {",
-                                                        "",
-                                                        "                    }",
-                                                        "                },"
-                                                    ).ForEach({$scriptText.Add($_)})
+                                                ).ForEach({ $scriptText.Add($_) })
                                                 }
                                             }
 
@@ -1373,99 +1309,162 @@ $sbGUI = {
 
                                             $scriptText.Add("            )")
                                             $scriptText.Add("        }")
-                                        } else {$scriptText.Add("        }")}
+                                        }
+                                    })
+
+                                $Script:templateText.EndRegion_ChildForms.ForEach({ $scriptText.Add($_) })
+                            }
+
+                            # Timers / Reusable ContextMenuStrips
+                            $dialogRegionStarted = $false
+                            $dialogCount = 0
+
+                            (@('Timer', 'ContextMenuStrip') + $supportedControls.Where({ $_.Name -match "Dialog$" }).Name).ForEach({
+                                    $childTypeName = $_
+
+                                    if ( $xml.Data.$childTypeName ) {
+                                        if ( $childTypeName -match "Dialog$" ) {
+                                            if ( $dialogRegionStarted -eq $false ) {
+                                                $Script:templateText.StartRegion_Dialogs.ForEach({ $scriptText.Add($_) })
+                                                $dialogCountMax = $xml.Data.ChildNodes.Where({ $_.ToString() -match "Dialog$" }).Count
+                                            }
+                                        } else { $Script:templateText."StartRegion_$($childTypeName)s".ForEach({ $scriptText.Add($_) }) }
+
+                                        $xml.Data.$childTypeName | ForEach-Object {
+                                            $controlName = $_.Name
+                                            $startIndex = [array]::IndexOf($xmlText, $xmlText -match "^  <$($childTypeName) Name=`"$($controlName)`"")
+                                            $keepProcessing = $true
+                                            $controlText = @()
+
+                                        ($startIndex..$($xmlText.Count - 2)).ForEach({
+                                                    if ( $keepProcessing ) {
+                                                        if (( $xmlText[$_] -eq "  </$($childTypeName)>" ) -or ( $xmlText[$_] -match "^  <$($childTypeName).*/>$" )) { $keepProcessing = $false }
+
+                                                        $controlText += $xmlText[$_]
+                                                    }
+                                                })
+
+                                            $scriptText.Add("        '$controlName' = @{")
+                                            $scriptText.Add("            XMLText = @`"")
+                                            $controlText | ForEach-Object { $scriptText.Add($_) }
+                                            $scriptText.Add("`"@")
+
+                                            if ( $xml.Data.Events.ChildNodes | Where-Object { $_.Root -eq "$($childTypeName)|$($controlName)" } ) {
+                                                $scriptText.Add('            Events = @(')
+
+                                                $xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "$($childTypeName)|$($controlName)" } | ForEach-Object {
+                                                    $name = $_.Name
+
+                                                    $_.Events -Split ' ' | ForEach-Object {
+                                                    ([string[]]`
+                                                            "                [pscustomobject]@{",
+                                                        "                    Name = '$($name)'",
+                                                        "                    EventType = '$($_)'",
+                                                        "                    ScriptBlock = {",
+                                                        "",
+                                                        "                    }",
+                                                        "                },"
+                                                    ).ForEach({ $scriptText.Add($_) })
+                                                    }
+                                                }
+
+                                                $scriptText[-1] = $scriptText[-1] -replace ","
+
+                                                $scriptText.Add("            )")
+                                                $scriptText.Add("        }")
+                                            } else { $scriptText.Add("        }") }
+                                        }
+
+                                        if ( $childTypeName -match "Dialog$" ) {
+                                            if ( $dialogCount -ge $dialogCountMax ) { $Script:templateText.EndRegion_Dialogs.ForEach({ $scriptText.Add($_) }) }
+                                        } else { $Script:templateText."EndRegion_$($childTypeName)s".ForEach({ $scriptText.Add($_) }) }
                                     }
+                                })
 
-                                    if ( $childTypeName -match "Dialog$" ) {
-                                        if ( $dialogCount -ge $dialogCountMax ) {$Script:templateText.EndRegion_Dialogs.ForEach({$scriptText.Add($_)})}
-                                    } else {$Script:templateText."EndRegion_$($childTypeName)s".ForEach({$scriptText.Add($_)})}
-                                }
-                            })
+                            # Environment Setup
+                            $Script:templateText.Region_EnvSetup.ForEach({ $scriptText.Add($_) })
 
-                                # Environment Setup
-                            $Script:templateText.Region_EnvSetup.ForEach({$scriptText.Add($_)})
-
-                                # Insert Dot Sourcing of files (make sure EnvSetup is before Timers
+                            # Insert Dot Sourcing of files (make sure EnvSetup is before Timers
                             if ( $Script:refsGenerate['gbx_DotSource'].Controls.Checked -contains $true ) {
                                 ([string[]]`
                                     "    #region Dot Sourcing of files",
-                                    "",
-                                    "    `$dotSourceDir = `$BaseDir",
-                                    ""
-                                ).ForEach({$scriptText.Add($_)})
+                                "",
+                                "    `$dotSourceDir = `$BaseDir",
+                                ""
+                                ).ForEach({ $scriptText.Add($_) })
 
-                                if ( $Script:refsGenerate['cbx_Functions'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Functions'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_Events'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Events'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_ChildForms'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_ChildForms'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_Dialogs'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Dialogs'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_ReuseContext'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_ReuseContext'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_EnvSetup'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_EnvSetup'].Text)`"")}
-                                if ( $Script:refsGenerate['cbx_Timers'].Checked ) {$scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['cbx_Timers'].Text)`"")}
+                                if ( $Script:refsGenerate['cbx_Functions'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Functions'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_Events'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Events'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_ChildForms'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_ChildForms'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_Dialogs'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_Dialogs'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_ReuseContext'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_ReuseContext'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_EnvSetup'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['tbx_EnvSetup'].Text)`"") }
+                                if ( $Script:refsGenerate['cbx_Timers'].Checked ) { $scriptText.Add("    . `"`$(`$dotSourceDir)\$($Script:refsGenerate['cbx_Timers'].Text)`"") }
 
                                 ([string[]]`
                                     "",
-                                    "    #endregion Dot Sourcing of files",
-                                    ""
-                                ).ForEach({$scriptText.Add($_)})
+                                "    #endregion Dot Sourcing of files",
+                                ""
+                                ).ForEach({ $scriptText.Add($_) })
                             }
 
-                                # Form Initialization
+                            # Form Initialization
                             ([string[]]`
                                 "    #region Form Initialization",
-                                "",
-                                "    try {",
-                                "        ConvertFrom-WinFormsXML -Reference refs -Suppress -Xml @`""
-                            ).ForEach({$scriptText.Add($_)})
+                            "",
+                            "    try {",
+                            "        ConvertFrom-WinFormsXML -Reference refs -Suppress -Xml @`""
+                            ).ForEach({ $scriptText.Add($_) })
 
-                            $formText | ForEach-Object {$scriptText.Add($_)}
+                            $formText | ForEach-Object { $scriptText.Add($_) }
 
                             ([string[]]`
                                 "`"@",
-                                "    } catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered during Form Initialization.`"}",
-                                "",
-                                "    #endregion Form Initialization",
-                                ""
-                            ).ForEach({$scriptText.Add($_)})
+                            "    } catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered during Form Initialization.`"}",
+                            "",
+                            "    #endregion Form Initialization",
+                            ""
+                            ).ForEach({ $scriptText.Add($_) })
 
-                                # Event Assignment
+                            # Event Assignment
                             if ( $xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" } ) {
-                                $Script:templateText.StartRegion_EventAssignment.ForEach({$scriptText.Add($_)})
+                                $Script:templateText.StartRegion_EventAssignment.ForEach({ $scriptText.Add($_) })
 
                                 $xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" } | ForEach-Object {
                                     $name = $_.Name
 
-                                    $_.Events -Split ' ' | ForEach-Object {$scriptText.Add("        `$Script:refs['$($name)'].Add_$($_)(`$eventSB['$($name)'].$($_))")}
+                                    $_.Events -Split ' ' | ForEach-Object { $scriptText.Add("        `$Script:refs['$($name)'].Add_$($_)(`$eventSB['$($name)'].$($_))") }
                                 }
 
-                                $Script:templateText.endRegion_EventAssignment.ForEach({$scriptText.Add($_)})
+                                $Script:templateText.endRegion_EventAssignment.ForEach({ $scriptText.Add($_) })
                             }
 
-                                # Other Actions Before ShowDialog
-                            $Script:templateText.Region_OtherActions.ForEach({$scriptText.Add($_)})
+                            # Other Actions Before ShowDialog
+                            $Script:templateText.Region_OtherActions.ForEach({ $scriptText.Add($_) })
                             $scriptText.Add("    try {[void]`$Script:refs['$($xml.Data.Form.Name)'].ShowDialog()} catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered unexpectedly at ShowDialog.`"}")
                             $scriptText.Add("")
 
-                                # Actions After Form Closed
-                            $Script:templateText.Region_AfterClose_EndSTAScriptBlock.ForEach({$scriptText.Add($_)})
+                            # Actions After Form Closed
+                            $Script:templateText.Region_AfterClose_EndSTAScriptBlock.ForEach({ $scriptText.Add($_) })
 
-                                # Start Point of Execution (Runspace Setup)
-                            $Script:templateText.Region_StartPoint.ForEach({$scriptText.Add($_)})
+                            # Start Point of Execution (Runspace Setup)
+                            $Script:templateText.Region_StartPoint.ForEach({ $scriptText.Add($_) })
 
-                                # Split Dot Sourced code to separate files
+                            # Split Dot Sourced code to separate files
                             if ( $Script:refsGenerate['gbx_DotSource'].Controls.Checked -contains $true ) {
-                                $Script:refsGenerate['gbx_DotSource'].Controls.Where({$_.Checked -eq $true}) | ForEach-Object {
+                                $Script:refsGenerate['gbx_DotSource'].Controls.Where({ $_.Checked -eq $true }) | ForEach-Object {
                                     $regionName = switch ($_.Name) {
-                                        cbx_Functions       {'Functions'}
-                                        cbx_Events          {'Event ScriptBlocks'}
-                                        cbx_ChildForms      {'Child Forms'}
-                                        cbx_ReuseContext    {'Reusable ContextMenuStrips'}
-                                        cbx_EnvSetup        {'Environment Setup'}
-                                        cbx_Timers          {'Timers'}
-                                        cbx_Dialogs         {'Dialogs'}
+                                        cbx_Functions { 'Functions' }
+                                        cbx_Events { 'Event ScriptBlocks' }
+                                        cbx_ChildForms { 'Child Forms' }
+                                        cbx_ReuseContext { 'Reusable ContextMenuStrips' }
+                                        cbx_EnvSetup { 'Environment Setup' }
+                                        cbx_Timers { 'Timers' }
+                                        cbx_Dialogs { 'Dialogs' }
                                     }
 
-                                    $startIndex = [array]::IndexOf($scriptText,"    #region $($regionName)")
-                                    $endIndex = [array]::IndexOf($scriptText,"    #endregion $($regionName)")
+                                    $startIndex = [array]::IndexOf($scriptText, "    #region $($regionName)")
+                                    $endIndex = [array]::IndexOf($scriptText, "    #endregion $($regionName)")
 
                                     $scriptText[$startIndex..$endIndex] | Out-File "$($generationPath)\$($Script:refsGenerate['gbx_DotSource'].Controls[$($_.Name -replace "^c",'t')].Text)"
 
@@ -1477,18 +1476,18 @@ $sbGUI = {
 
                             $scriptText | Out-File "$($generationPath)\$($projectName -replace "fbs$","ps1")" -Encoding ASCII -Force
 
-                            [void][System.Windows.Forms.MessageBox]::Show('Script file(s) successfully generated!','Success')
+                            [void][System.Windows.Forms.MessageBox]::Show('Script file(s) successfully generated!', 'Success')
                         }
                     } catch {
                         if ( $_.Exception.Message -ne 'SaveCancelled' ) {
-                            [void][System.Windows.Forms.MessageBox]::Show('There was an issue generating the script file.','Error')
+                            [void][System.Windows.Forms.MessageBox]::Show('There was an issue generating the script file.', 'Error')
                             Update-ErrorLog -ErrorRecord $_
                         }
                     }
                 }
             }
         }
-        'TreeView' = @{
+        'TreeView'             = @{
             AfterSelect = {
                 if ( $Script:openingProject -eq $false ) {
                     try {
@@ -1500,22 +1499,22 @@ $sbGUI = {
 
                         if ( $objRef.Objects[$nodeName].Parent ) {
                             
-                            if (( @('FlowLayoutPanel','TableLayoutPanel') -notcontains $objRef.Objects[$nodeName].Parent.GetType().Name ) -and
+                            if (( @('FlowLayoutPanel', 'TableLayoutPanel') -notcontains $objRef.Objects[$nodeName].Parent.GetType().Name ) -and
                                ( $objRef.Objects[$nodeName].Dock -eq 'None' ) -and
-                               ( @('SplitterPanel','ToolStripMenuItem','ToolStripComboBox','ToolStripTextBox','ToolStripSeparator','ContextMenuStrip') -notcontains $nodeType ) -and
-                               ( $Script:supportedControls.Where({$_.Type -eq 'Parentless'}).Name -notcontains $nodeType )) {
+                               ( @('SplitterPanel', 'ToolStripMenuItem', 'ToolStripComboBox', 'ToolStripTextBox', 'ToolStripSeparator', 'ContextMenuStrip') -notcontains $nodeType ) -and
+                               ( $Script:supportedControls.Where({ $_.Type -eq 'Parentless' }).Name -notcontains $nodeType )) {
                                 
                                 $objRef.Objects[$nodeName].BringToFront()
                             }
                             
                             Move-SButtons -Object $objRef.Objects[$nodeName]
-                        } else {$Script:sButtons.GetEnumerator().ForEach({$_.Value.Visible = $false})}
+                        } else { $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $false }) }
 
                         $Script:refs['lst_AssignedEvents'].Items.Clear()
 
                         if ( $objRef.Events[$this.SelectedNode.Name] ) {
                             $Script:refs['lst_AssignedEvents'].BeginUpdate()
-                            $objRef.Events[$nodeName].ForEach({[void]$Script:refs['lst_AssignedEvents'].Items.Add($_)})
+                            $objRef.Events[$nodeName].ForEach({ [void]$Script:refs['lst_AssignedEvents'].Items.Add($_) })
                             $Script:refs['lst_AssignedEvents'].EndUpdate()
 
                             $Script:refs['lst_AssignedEvents'].Enabled = $true
@@ -1530,29 +1529,29 @@ $sbGUI = {
                         $Script:refs['lst_AvailableEvents'].BeginUpdate()
 
                         if ( $eventTypes.Count -gt 0 ) {
-                            $eventTypes | ForEach-Object {[void]$Script:refs['lst_AvailableEvents'].Items.Add("$($_ -replace "^add_")")}}
-                        else {
+                            $eventTypes | ForEach-Object { [void]$Script:refs['lst_AvailableEvents'].Items.Add("$($_ -replace "^add_")") }
+                        } else {
                             [void]$Script:refs['lst_AvailableEvents'].Items.Add('No Events Found on Selected Object')
                             $Script:refs['lst_AvailableEvents'].Enabled = $false
                         }
 
                         $Script:refs['lst_AvailableEvents'].EndUpdate()
-                    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered after selecting TreeNode."}
+                    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered after selecting TreeNode." }
                 }
             }
         }
-        'PropertyGrid' = @{
+        'PropertyGrid'         = @{
             PropertyValueChanged = {
-                param($Sender,$e)
+                param($Sender, $e)
 
                 try {
                     $changedProperty = $e.ChangedItem
 
-                    if ( @('Location','Size','Dock','AutoSize','Multiline') -contains $changedProperty.PropertyName ) {Move-SButtons -Object $Script:refs['PropertyGrid'].SelectedObject}
+                    if ( @('Location', 'Size', 'Dock', 'AutoSize', 'Multiline') -contains $changedProperty.PropertyName ) { Move-SButtons -Object $Script:refs['PropertyGrid'].SelectedObject }
                     
                     if ( $e.ChangedItem.PropertyDepth -gt 0 ) {
                         $stopProcess = $false
-                        ($e.ChangedItem.PropertyDepth-1)..0 | ForEach-Object {
+                        ($e.ChangedItem.PropertyDepth - 1)..0 | ForEach-Object {
                             if ( $stopProcess -eq $false ) {
                                 if ( $changedProperty.ParentGridEntry.HelpKeyword -match "^System.Windows.Forms.SplitContainer.Panel" ) {
                                     $stopProcess = $true
@@ -1564,7 +1563,7 @@ $sbGUI = {
                                 }
                             }
                         }
-                    } else {$value = $changedProperty.GetPropertyTextValue()}
+                    } else { $value = $changedProperty.GetPropertyTextValue() }
 
                     $changedControl = $Script:refs['PropertyGrid'].SelectedObject
                     $controlType = $Script:refs['TreeView'].SelectedNode.Text -replace " - .*$"
@@ -1574,32 +1573,32 @@ $sbGUI = {
 
                     if ( $changedProperty.PropertyDescriptor.ShouldSerializeValue($changedProperty.Component) ) {
                         switch ($changedProperty.PropertyType) {
-                            'System.Drawing.Image' {[void][System.Windows.Forms.MessageBox]::Show('While the image will display on the preview of this form, you will need to add the image manually in the generated code.','Notification')}
+                            'System.Drawing.Image' { [void][System.Windows.Forms.MessageBox]::Show('While the image will display on the preview of this form, you will need to add the image manually in the generated code.', 'Notification') }
                             default {
-                                if ( $null -eq $objRef.Changes[$controlName] ) {$objRef.Changes[$controlName] = @{}}
+                                if ( $null -eq $objRef.Changes[$controlName] ) { $objRef.Changes[$controlName] = @{} }
                                 $objRef.Changes[$controlName][$changedProperty.PropertyName] = $value
                             }
                         }
                     } elseif ( $objRef.Changes[$controlName] ) {
                         if ( $objRef.Changes[$controlName][$changedProperty.PropertyName] ) {
                             $objRef.Changes[$controlName].Remove($changedProperty.PropertyName)
-                            if ( $objRef.Changes[$controlName].Count -eq 0 ) {$objRef.Changes.Remove($controlName)}
+                            if ( $objRef.Changes[$controlName].Count -eq 0 ) { $objRef.Changes.Remove($controlName) }
                         }
                     }
-                } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered after changing property value ($($controlType) - $($controlName))."}
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered after changing property value ($($controlType) - $($controlName))." }
             }
         }
-        'trv_Controls' = @{
+        'trv_Controls'         = @{
             DoubleClick = {
                 $controlName = $this.SelectedNode.Name
 
                 if ( $controlName -eq 'ContextMenuStrip' ) {
-                    if ( [System.Windows.Forms.MessageBox]::Show("Select 'Yes' to add only to this one control, or 'No' to create a re-useable ContextMenuStrip.", 'Confirm', 4) -eq 'Yes' ) {$context = 1}
-                    else {$context = 0}
-                } else {$context = 2}
+                    if ( [System.Windows.Forms.MessageBox]::Show("Select 'Yes' to add only to this one control, or 'No' to create a re-useable ContextMenuStrip.", 'Confirm', 4) -eq 'Yes' ) { $context = 1 }
+                    else { $context = 0 }
+                } else { $context = 2 }
 
-                if ( @('All Controls','Common','Containers', 'Menus and ToolStrips','Miscellaneous') -notcontains $controlName ) {
-                    $controlObjectType = $Script:supportedControls.Where({$_.Name -eq $controlName}).Type
+                if ( @('All Controls', 'Common', 'Containers', 'Menus and ToolStrips', 'Miscellaneous') -notcontains $controlName ) {
+                    $controlObjectType = $Script:supportedControls.Where({ $_.Name -eq $controlName }).Type
                     
                     try {
                         if (( $controlObjectType -eq 'Parentless' ) -or ( $context -eq 0 )) {
@@ -1611,27 +1610,27 @@ $sbGUI = {
 
                             if ( $userInput.Result -eq 'OK' ) {
                                 if ( $Script:refs['TreeView'].Nodes.Text -match "$($controlType) - $($userInput.NewName)" ) {
-                                    [void][System.Windows.Forms.MessageBox]::Show("A $($controlType) with the Name '$($userInput.NewName)' already exists.",'Error')
+                                    [void][System.Windows.Forms.MessageBox]::Show("A $($controlType) with the Name '$($userInput.NewName)' already exists.", 'Error')
                                 } else {
                                     Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType $controlType -ControlName $userInput.NewName
                                 }
                             }
                         } else {
-                            if ( $Script:supportedControls.Where({$_.Name -eq $($refs['TreeView'].SelectedNode.Text -replace " - .*$")}).ChildTypes -contains $controlObjectType ) {
+                            if ( $Script:supportedControls.Where({ $_.Name -eq $($refs['TreeView'].SelectedNode.Text -replace " - .*$") }).ChildTypes -contains $controlObjectType ) {
                                 Add-TreeNode -TreeObject $Script:refs['TreeView'].SelectedNode -ControlType $controlName
-                            } else {[void][System.Windows.Forms.MessageBox]::Show("Unable to add $($controlName) to $($refs['TreeView'].SelectedNode.Text -replace " - .*$").")}
+                            } else { [void][System.Windows.Forms.MessageBox]::Show("Unable to add $($controlName) to $($refs['TreeView'].SelectedNode.Text -replace " - .*$").") }
                         }
-                    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while adding '$($controlName)'."} 
+                    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while adding '$($controlName)'." } 
                 }
             }
         }
-        'lst_AvailableEvents' = @{
+        'lst_AvailableEvents'  = @{
             DoubleClick = {
                 $controlName = $Script:refs['TreeView'].SelectedNode.Name
                 $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
 
                 if ( $Script:refs['lst_AssignedEvents'].Items -notcontains $this.SelectedItem ) {
-                    if ( $Script:refs['lst_AssignedEvents'].Items -contains 'No Events' ) {$Script:refs['lst_AssignedEvents'].Items.Clear()}
+                    if ( $Script:refs['lst_AssignedEvents'].Items -contains 'No Events' ) { $Script:refs['lst_AssignedEvents'].Items.Clear() }
                     [void]$Script:refs['lst_AssignedEvents'].Items.Add($this.SelectedItem)
                     $Script:refs['lst_AssignedEvents'].Enabled = $true
 
@@ -1639,7 +1638,7 @@ $sbGUI = {
                 }
             }
         }
-        'lst_AssignedEvents' = @{
+        'lst_AssignedEvents'   = @{
             DoubleClick = {
                 $controlName = $Script:refs['TreeView'].SelectedNode.Name
                 $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
@@ -1660,7 +1659,7 @@ $sbGUI = {
                 }
             }
         }
-        'ChangeView' = {
+        'ChangeView'           = {
             try {
                 switch ($this.Text) {
                     'Toolbox' {
@@ -1709,7 +1708,7 @@ $sbGUI = {
                     $tsViewItem.Checked = $false
                     $tsMenuItem.BackColor = 'MidnightBlue'
 
-                    if ( $sptChanged."Panel$($otherNum)Collapsed" ) {$pnlChanged.Visible = $false} else {$sptChanged."Panel$($thisNum)Collapsed" = $true}
+                    if ( $sptChanged."Panel$($otherNum)Collapsed" ) { $pnlChanged.Visible = $false } else { $sptChanged."Panel$($thisNum)Collapsed" = $true }
                 } else {
                     $tsViewItem.Checked = $true
                     $tsMenuItem.BackColor = 'RoyalBlue'
@@ -1718,32 +1717,32 @@ $sbGUI = {
                     $pnlChanged.Visible = $true
                 }
 
-                if ( $pnlChanged.Visible -eq $true ) {$refs["lbl_$($side)"].Visible = $true} else {$refs["lbl_$($side)"].Visible = $false}
-            } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during View change."}
+                if ( $pnlChanged.Visible -eq $true ) { $refs["lbl_$($side)"].Visible = $true } else { $refs["lbl_$($side)"].Visible = $false }
+            } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during View change." }
         }
-        'ChangePanelSize' = @{
+        'ChangePanelSize'      = @{
             'MouseMove' = {
                 param($Sender, $e)
                 
                 if (( $e.Button -eq 'Left' ) -and ( $e.Location.X -ne 0 )) {
-                        # Determine which panel to resize
+                    # Determine which panel to resize
                     $side = $Sender.Name -replace "^lbl_"
-                        # Determine the new X coordinate
-                    if ( $side -eq 'Right' ) {$newX = $refs["pnl_$($side)"].Size.Width - $e.Location.X} else {$newX = $refs["pnl_$($side)"].Size.Width + $e.Location.X}
-                        # Change the size of the panel
-                    if ( $newX -ge 100 ) {$refs["pnl_$($side)"].Size = New-Object System.Drawing.Size($newX,$refs["pnl_$($side)"].Size.Y)}
-                        # Refresh form to remove artifacts while dragging
+                    # Determine the new X coordinate
+                    if ( $side -eq 'Right' ) { $newX = $refs["pnl_$($side)"].Size.Width - $e.Location.X } else { $newX = $refs["pnl_$($side)"].Size.Width + $e.Location.X }
+                    # Change the size of the panel
+                    if ( $newX -ge 100 ) { $refs["pnl_$($side)"].Size = New-Object System.Drawing.Size($newX, $refs["pnl_$($side)"].Size.Y) }
+                    # Refresh form to remove artifacts while dragging
                     $Sender.Parent.Refresh()
                 }
             }
         }
-        'CheckedChanged' = {
+        'CheckedChanged'       = {
             param ($Sender)
 
             if ( $Sender.Checked ) {
                 $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Enabled = $true
                 $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Focus()
-            } else {$Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Enabled = $false}
+            } else { $Sender.Parent.Controls["$($Sender.Name -replace "^c",'t')"].Enabled = $false }
         }
     }
 
@@ -1760,20 +1759,20 @@ $sbGUI = {
     <Button Name="StopDingOnEnter" Visible="False" />
   </Form>
 "@
-            Events = @(
+            Events  = @(
                 [pscustomobject]@{
-                    Name = 'NameInput'
-                    EventType = 'Activated'
-                    ScriptBlock = {$this.Controls['UserInput'].Focus()}
+                    Name        = 'NameInput'
+                    EventType   = 'Activated'
+                    ScriptBlock = { $this.Controls['UserInput'].Focus() }
                 },
                 [pscustomobject]@{
-                    Name = 'UserInput'
-                    EventType = 'KeyUp'
+                    Name        = 'UserInput'
+                    EventType   = 'KeyUp'
                     ScriptBlock = {
                         if ( $_.KeyCode -eq 'Return' ) {
                             $objRef = Get-RootNodeObjRef -TreeNode $Script:refs['TreeView'].SelectedNode
 
-                            if ( $((Get-Date)-$($Script:lastUIKeyUp)).TotalMilliseconds -lt 250 ) {
+                            if ( $((Get-Date) - $($Script:lastUIKeyUp)).TotalMilliseconds -lt 250 ) {
                                 # Do nothing
                             } elseif ( $this.Text -match "(\||<|>|&|\$|'|`")" ) {
                                 [void][System.Windows.Forms.MessageBox]::Show("Names cannot contain any of the following characters: `"|<'>`"&`$`".", 'Error')
@@ -1794,7 +1793,7 @@ $sbGUI = {
                 }
             )
         }
-        'Generate' = @{
+        'Generate'  = @{
             XMLText = @"
   <Form Name="Generate" FormBorderStyle="FixedDialog" MaximizeBox="False" MinimizeBox="False" ShowIcon="False" ShowInTaskbar="False" Size="410, 450" StartPosition="CenterParent" Text="Generate Script File(s)">
     <GroupBox Name="gbx_DotSource" Location="25, 115" Size="345, 249" Text="Dot Sourcing">
@@ -1820,57 +1819,57 @@ $sbGUI = {
     <Button Name="btn_Generate" FlatStyle="Flat" Location="104, 376" Size="178, 23" Text="Generate Script File(s)" />
   </Form>
 "@
-            Events = @(
+            Events  = @(
                 [pscustomobject]@{
-                    Name = 'cbx_Functions'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_Functions'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_Events'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_Events'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_ChildForms'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_ChildForms'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_Timers'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_Timers'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_Dialogs'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_Dialogs'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_ReuseContext'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_ReuseContext'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'cbx_EnvSetup'
-                    EventType = 'CheckedChanged'
+                    Name        = 'cbx_EnvSetup'
+                    EventType   = 'CheckedChanged'
                     ScriptBlock = $Script:eventSB.CheckedChanged
                 },
                 [pscustomobject]@{
-                    Name = 'btn_Add'
-                    EventType = 'Click'
+                    Name        = 'btn_Add'
+                    EventType   = 'Click'
                     ScriptBlock = {
                         $openDialog = ConvertFrom-WinFormsXML -Xml @"
 <OpenFileDialog InitialDirectory="$($Script:projectsDir)" AddExtension="True" DefaultExt="fbs" Filter="fbs files (*.fbs)|*.fbs" FilterIndex="1" ValidateNames="True" CheckFileExists="True" RestoreDirectory="True" />
 "@
                         $openDialog.Add_FileOK({
-                            param($Sender,$e)
+                                param($Sender, $e)
 
-                            if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Tag -contains $this.FileName ) {
-                                [void][System.Windows.Forms.MessageBox]::Show("The project '$($this.FileName | Split-Path -Leaf)' has already been added as a child form of this project.",'Validation Error')
-                                $e.Cancel = $true
-                            }
-                        })
+                                if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Tag -contains $this.FileName ) {
+                                    [void][System.Windows.Forms.MessageBox]::Show("The project '$($this.FileName | Split-Path -Leaf)' has already been added as a child form of this project.", 'Validation Error')
+                                    $e.Cancel = $true
+                                }
+                            })
 
                         try {
                             if ( $openDialog.ShowDialog() -eq 'OK' ) {
@@ -1878,67 +1877,67 @@ $sbGUI = {
 
                                 $childFormCount = $Script:refsGenerate['gbx_ChildForms'].Controls.Where({ $_.Name -match 'tbx_' }).Count
 
-                                @('Generate','gbx_ChildForms').ForEach({
-                                    $Script:refsGenerate[$_].Size = New-Object System.Drawing.Size($Script:refsGenerate[$_].Size.Width,($Script:refsGenerate[$_].Size.Height + 40))
-                                })
+                                @('Generate', 'gbx_ChildForms').ForEach({
+                                        $Script:refsGenerate[$_].Size = New-Object System.Drawing.Size($Script:refsGenerate[$_].Size.Width, ($Script:refsGenerate[$_].Size.Height + 40))
+                                    })
 
-                                @('btn_Add','gbx_DotSource','btn_Generate').ForEach({
-                                    $Script:refsGenerate[$_].Location = New-Object System.Drawing.Size($Script:refsGenerate[$_].Location.X,($Script:refsGenerate[$_].Location.Y + 40))
-                                })
+                                @('btn_Add', 'gbx_DotSource', 'btn_Generate').ForEach({
+                                        $Script:refsGenerate[$_].Location = New-Object System.Drawing.Size($Script:refsGenerate[$_].Location.X, ($Script:refsGenerate[$_].Location.Y + 40))
+                                    })
 
-                                $Script:refsGenerate['Generate'].Location = New-Object System.Drawing.Size($Script:refsGenerate['Generate'].Location.X,($Script:refsGenerate['Generate'].Location.Y - 20))
+                                $Script:refsGenerate['Generate'].Location = New-Object System.Drawing.Size($Script:refsGenerate['Generate'].Location.X, ($Script:refsGenerate['Generate'].Location.Y - 20))
 
                                 $defaultTextBox = $Script:refsGenerate['gbx_ChildForms'].Controls["tbx_ChildForm$($childFormCount)"]
-                                $defaultTextBox.Location = New-Object System.Drawing.Size($defaultTextBox.Location.X,($defaultTextBox.Location.Y + 40))
+                                $defaultTextBox.Location = New-Object System.Drawing.Size($defaultTextBox.Location.X, ($defaultTextBox.Location.Y + 40))
                                 $defaultTextBox.Name = "tbx_ChildForm$($childFormCount + 1)"
 
                                 $button = ConvertFrom-WinFormsXML -ParentControl $Script:refsGenerate['gbx_ChildForms'] -Xml @"
 <Button Name="btn_Minus$($childFormCount)" Font="Microsoft Sans Serif, 14.25pt, style=Bold" FlatStyle="System" Location="25, $(25 + ($childFormCount - 1) * 40)" Size="21, 19" Text="-" />
 "@
                                 $button.Add_Click({
-                                    try {
-                                        [int]$btnIndex = $this.Name -replace "\D"
-                                        $childFormCount = $Script:refsGenerate['gbx_ChildForms'].Controls.Where({ $_.Name -match 'tbx_' }).Count
+                                        try {
+                                            [int]$btnIndex = $this.Name -replace "\D"
+                                            $childFormCount = $Script:refsGenerate['gbx_ChildForms'].Controls.Where({ $_.Name -match 'tbx_' }).Count
 
-                                        $($Script:refsGenerate['gbx_ChildForms'].Controls["tbx_ChildForm$($btnIndex)"]).Dispose()
-                                        $this.Dispose()
+                                            $($Script:refsGenerate['gbx_ChildForms'].Controls["tbx_ChildForm$($btnIndex)"]).Dispose()
+                                            $this.Dispose()
 
-                                        @(($btnIndex + 1)..$childFormCount).ForEach({
-                                            if ( $null -eq $Script:refsGenerate['gbx_ChildForms'].Controls["btn_Minus$($_)"] ) {$btnName = 'btn_Add'} else {$btnName = "btn_Minus$($_)"}
+                                            @(($btnIndex + 1)..$childFormCount).ForEach({
+                                                    if ( $null -eq $Script:refsGenerate['gbx_ChildForms'].Controls["btn_Minus$($_)"] ) { $btnName = 'btn_Add' } else { $btnName = "btn_Minus$($_)" }
 
-                                            $btnLocX = $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location.X
-                                            $btnLocY = $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location.Y
+                                                    $btnLocX = $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location.X
+                                                    $btnLocY = $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location.Y
 
-                                            $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location = New-Object System.Drawing.Size($btnLocX,($btnLocY - 40))
+                                                    $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Location = New-Object System.Drawing.Size($btnLocX, ($btnLocY - 40))
 
-                                            $tbxName = "tbx_ChildForm$($_)"
+                                                    $tbxName = "tbx_ChildForm$($_)"
 
-                                            $tbxLocX = $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location.X
-                                            $tbxLocY = $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location.Y
-                                            $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location = New-Object System.Drawing.Size($tbxLocX,($tbxLocY - 40))
+                                                    $tbxLocX = $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location.X
+                                                    $tbxLocY = $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location.Y
+                                                    $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Location = New-Object System.Drawing.Size($tbxLocX, ($tbxLocY - 40))
 
-                                            if ( $btnName -ne 'btn_Add' ) {$Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Name = "btn_Minus$($_ - 1)"}
-                                            $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Name = "tbx_ChildForm$($_ - 1)"
-                                        })
+                                                    if ( $btnName -ne 'btn_Add' ) { $Script:refsGenerate['gbx_ChildForms'].Controls[$btnName].Name = "btn_Minus$($_ - 1)" }
+                                                    $Script:refsGenerate['gbx_ChildForms'].Controls[$tbxName].Name = "tbx_ChildForm$($_ - 1)"
+                                                })
 
-                                        @('Generate','gbx_ChildForms').ForEach({
-                                            $Script:refsGenerate[$_].Size = New-Object System.Drawing.Size($Script:refsGenerate[$_].Size.Width,($Script:refsGenerate[$_].Size.Height - 40))
-                                        })
+                                            @('Generate', 'gbx_ChildForms').ForEach({
+                                                    $Script:refsGenerate[$_].Size = New-Object System.Drawing.Size($Script:refsGenerate[$_].Size.Width, ($Script:refsGenerate[$_].Size.Height - 40))
+                                                })
 
-                                        @('gbx_DotSource','btn_Generate').ForEach({
-                                            $Script:refsGenerate[$_].Location = New-Object System.Drawing.Size($Script:refsGenerate[$_].Location.X,($Script:refsGenerate[$_].Location.Y - 40))
-                                        })
+                                            @('gbx_DotSource', 'btn_Generate').ForEach({
+                                                    $Script:refsGenerate[$_].Location = New-Object System.Drawing.Size($Script:refsGenerate[$_].Location.X, ($Script:refsGenerate[$_].Location.Y - 40))
+                                                })
 
-                                        $Script:refsGenerate['Generate'].Location = New-Object System.Drawing.Size($Script:refsGenerate['Generate'].Location.X,($Script:refsGenerate['Generate'].Location.Y + 20))
+                                            $Script:refsGenerate['Generate'].Location = New-Object System.Drawing.Size($Script:refsGenerate['Generate'].Location.X, ($Script:refsGenerate['Generate'].Location.Y + 20))
 
-                                        if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -le 2 ) {
-                                            $Script:refsGenerate['cbx_ChildForms'].Checked = $false
-                                            $Script:refsGenerate['cbx_ChildForms'].Enabled = $false
-                                        }
+                                            if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -le 2 ) {
+                                                $Script:refsGenerate['cbx_ChildForms'].Checked = $false
+                                                $Script:refsGenerate['cbx_ChildForms'].Enabled = $false
+                                            }
 
-                                        Remove-Variable -Name btnIndex, childFormCount, btnName, btnLocX, btnLocY, tbxName, tbxLocX, tbxLocY
-                                    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while removing child form."}
-                                })
+                                            Remove-Variable -Name btnIndex, childFormCount, btnName, btnLocX, btnLocY, tbxName, tbxLocX, tbxLocY
+                                        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while removing child form." }
+                                    })
 
                                 ConvertFrom-WinFormsXML -ParentControl $Script:refsGenerate['gbx_ChildForms'] -Suppress -Xml @"
 <TextBox Name="tbx_ChildForm$($childFormCount)" Location="62, $(25 + ($childFormCount - 1) * 40)" Size="252, 20" Text="...\$($fileName | Split-Path -Leaf)" Tag="$fileName" Enabled="False" />
@@ -1946,7 +1945,7 @@ $sbGUI = {
                                 $Script:refsGenerate['cbx_ChildForms'].Enabled = $true
                                 Remove-Variable -Name button, fileName, childFormCount, defaultTextBox
                             }
-                        } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while adding child form."}
+                        } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered while adding child form." }
                         finally {
                             $openDialog.Dispose()
                             Remove-Variable -Name openDialog
@@ -1954,20 +1953,20 @@ $sbGUI = {
                     }
                 },
                 [pscustomobject]@{
-                    Name = 'btn_Generate'
-                    EventType = 'Click'
+                    Name        = 'btn_Generate'
+                    EventType   = 'Click'
                     ScriptBlock = {
                         $fileError = 0
-                        [array]$checked = $Script:refsGenerate['gbx_DotSource'].Controls.Where({$_.Checked -eq $true})
+                        [array]$checked = $Script:refsGenerate['gbx_DotSource'].Controls.Where({ $_.Checked -eq $true })
 
                         if ( $checked.Count -gt 0 ) {
                             $checked.ForEach({
-                                $fileName = $($Script:refsGenerate[$($_.Name -replace "^cbx","tbx")]).Text
-                                if ( $($fileName -match ".*\...") -eq $false ) {
-                                    [void][System.Windows.Forms.MessageBox]::Show("Filename not valid for the dot sourcing of $($_.Name -replace "^cbx_")")
-                                    $fileError++
-                                }
-                            })
+                                    $fileName = $($Script:refsGenerate[$($_.Name -replace "^cbx", "tbx")]).Text
+                                    if ( $($fileName -match ".*\...") -eq $false ) {
+                                        [void][System.Windows.Forms.MessageBox]::Show("Filename not valid for the dot sourcing of $($_.Name -replace "^cbx_")")
+                                        $fileError++
+                                    }
+                                })
                         }
 
                         if ( $fileError -eq 0 ) {
@@ -1998,10 +1997,10 @@ $sbGUI = {
     <ToolStripMenuItem Name="Delete" ShortcutKeys="Ctrl+D" Text="Delete" ShortcutKeyDisplayString="Ctrl+D" />
   </ContextMenuStrip>
 "@
-            Events = @(
+            Events  = @(
                 [pscustomobject]@{
-                    Name = 'TreeNode'
-                    EventType = 'Opening'
+                    Name        = 'TreeNode'
+                    EventType   = 'Opening'
                     ScriptBlock = {
                         $parentType = $Script:refs['TreeView'].SelectedNode.Text -replace " - .*$"
                         
@@ -2025,33 +2024,33 @@ $sbGUI = {
                     }
                 },
                 [pscustomobject]@{
-                    Name = 'MoveUp'
-                    EventType = 'Click'
+                    Name        = 'MoveUp'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['Move Up'].Click
                 },
                 [pscustomobject]@{
-                    Name = 'MoveDown'
-                    EventType = 'Click'
+                    Name        = 'MoveDown'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['Move Down'].Click
                 },
                 [pscustomobject]@{
-                    Name = 'CopyNode'
-                    EventType = 'Click'
+                    Name        = 'CopyNode'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['CopyNode'].Click
                 },
                 [pscustomobject]@{
-                    Name = 'PasteNode'
-                    EventType = 'Click'
+                    Name        = 'PasteNode'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['PasteNode'].Click
                 },
                 [pscustomobject]@{
-                    Name = 'Rename'
-                    EventType = 'Click'
+                    Name        = 'Rename'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['Rename'].Click
                 },
                 [pscustomobject]@{
-                    Name = 'Delete'
-                    EventType = 'Click'
+                    Name        = 'Delete'
+                    EventType   = 'Click'
                     ScriptBlock = $eventSB['Delete'].Click
                 }
             )
@@ -2068,73 +2067,73 @@ $sbGUI = {
         Add-Type -AssemblyName System.Windows.Forms
         Add-Type -AssemblyName System.Drawing
 
-            # Confirm SavedProjects directory exists and set SavedProjects directory
+        # Confirm SavedProjects directory exists and set SavedProjects directory
         if (-not $Script:projectsDir) {
-        $Script:projectsDir = "$([Environment]::GetFolderPath("MyDocuments"))\WinFormsCreator"
+            $Script:projectsDir = "$([Environment]::GetFolderPath("MyDocuments"))\WinFormsCreator"
         }
 
-            # Set Misc Variables
+        # Set Misc Variables
         $Script:lastUIKeyUp = Get-Date
         $Script:newNameCheck = $true
         $Script:openingProject = $false
         $Script:MouseMoving = $false
 
         $Script:supportedControls = @(
-            [pscustomobject]@{Name='Button';Prefix='btn';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='CheckBox';Prefix='cbx';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='CheckedListBox';Prefix='clb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='ColorDialog';Prefix='cld';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='ComboBox';Prefix='cmb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='ContextMenuStrip';Prefix='cms';Type='Context';ChildTypes=@('MenuStrip-Root','MenuStrip-Child')},
-            [pscustomobject]@{Name='DataGridView';Prefix='dgv';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='DateTimePicker';Prefix='dtp';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='FileDialog';Prefix='fid';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='FlowLayoutPanel';Prefix='flp';Type='Container';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='FolderBrowserDialog';Prefix='fbd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='FontDialog';Prefix='fnd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='GroupBox';Prefix='gbx';Type='Container';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='Label';Prefix='lbl';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='LinkLabel';Prefix='llb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='ListBox';Prefix='lbx';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='ListView';Prefix='lsv';Type='Common';ChildTypes=@('Context')},  # need to fix issue with VirtualMode when 0 items
-            [pscustomobject]@{Name='MaskedTextBox';Prefix='mtb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='MenuStrip';Prefix='mst';Type='MenuStrip';ChildTypes=@('MenuStrip-Root')},
-            [pscustomobject]@{Name='MonthCalendar';Prefix='mcd';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='NumericUpDown';Prefix='nud';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='OpenFileDialog';Prefix='ofd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='PageSetupDialog';Prefix='psd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='Panel';Prefix='pnl';Type='Container';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='PictureBox';Prefix='pbx';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='PrintDialog';Prefix='prd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='PrintPreviewDialog';Prefix='ppd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='ProgressBar';Prefix='pbr';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='PropertyGrid';Prefix='pgd';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='RadioButton';Prefix='rdb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='RichTextBox';Prefix='rtb';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='SaveFileDialog';Prefix='sfd';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='SplitContainer';Prefix='scr';Type='Container';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='SplitterPanel';Prefix='spl';Type='SplitContainer';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='TabControl';Prefix='tcl';Type='Common';ChildTypes=@('Context','TabControl')},
-            [pscustomobject]@{Name='TabPage';Prefix='tpg';Type='TabControl';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='TableLayoutPanel';Prefix='tlp';Type='Container';ChildTypes=@('Common','Container','MenuStrip','Context')},
-            [pscustomobject]@{Name='TextBox';Prefix='tbx';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='Timer';Prefix='tmr';Type='Parentless';ChildTypes=@()},
-            [pscustomobject]@{Name='TreeView';Prefix='tvw';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='WebBrowser';Prefix='wbr';Type='Common';ChildTypes=@('Context')},
-            [pscustomobject]@{Name='ToolStripMenuItem';Prefix='tmi';Type='MenuStrip-Root';ChildTypes=@('MenuStrip-Root','MenuStrip-Child')},
-            [pscustomobject]@{Name='ToolStripComboBox';Prefix='tcb';Type='MenuStrip-Root';ChildTypes=@()},
-            [pscustomobject]@{Name='ToolStripTextBox';Prefix='ttb';Type='MenuStrip-Root';ChildTypes=@()},
-            [pscustomobject]@{Name='ToolStripSeparator';Prefix='tss';Type='MenuStrip-Child';ChildTypes=@()},
-            [pscustomobject]@{Name='Form';Prefix='frm';Type='Special';ChildTypes=@('Common','Container','Context','MenuStrip')}
+            [pscustomobject]@{Name = 'Button'; Prefix = 'btn'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'CheckBox'; Prefix = 'cbx'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'CheckedListBox'; Prefix = 'clb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'ColorDialog'; Prefix = 'cld'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'ComboBox'; Prefix = 'cmb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'ContextMenuStrip'; Prefix = 'cms'; Type = 'Context'; ChildTypes = @('MenuStrip-Root', 'MenuStrip-Child') },
+            [pscustomobject]@{Name = 'DataGridView'; Prefix = 'dgv'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'DateTimePicker'; Prefix = 'dtp'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'FileDialog'; Prefix = 'fid'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'FlowLayoutPanel'; Prefix = 'flp'; Type = 'Container'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'FolderBrowserDialog'; Prefix = 'fbd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'FontDialog'; Prefix = 'fnd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'GroupBox'; Prefix = 'gbx'; Type = 'Container'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'Label'; Prefix = 'lbl'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'LinkLabel'; Prefix = 'llb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'ListBox'; Prefix = 'lbx'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'ListView'; Prefix = 'lsv'; Type = 'Common'; ChildTypes = @('Context') }, # need to fix issue with VirtualMode when 0 items
+            [pscustomobject]@{Name = 'MaskedTextBox'; Prefix = 'mtb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'MenuStrip'; Prefix = 'mst'; Type = 'MenuStrip'; ChildTypes = @('MenuStrip-Root') },
+            [pscustomobject]@{Name = 'MonthCalendar'; Prefix = 'mcd'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'NumericUpDown'; Prefix = 'nud'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'OpenFileDialog'; Prefix = 'ofd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'PageSetupDialog'; Prefix = 'psd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'Panel'; Prefix = 'pnl'; Type = 'Container'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'PictureBox'; Prefix = 'pbx'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'PrintDialog'; Prefix = 'prd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'PrintPreviewDialog'; Prefix = 'ppd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'ProgressBar'; Prefix = 'pbr'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'PropertyGrid'; Prefix = 'pgd'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'RadioButton'; Prefix = 'rdb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'RichTextBox'; Prefix = 'rtb'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'SaveFileDialog'; Prefix = 'sfd'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'SplitContainer'; Prefix = 'scr'; Type = 'Container'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'SplitterPanel'; Prefix = 'spl'; Type = 'SplitContainer'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'TabControl'; Prefix = 'tcl'; Type = 'Common'; ChildTypes = @('Context', 'TabControl') },
+            [pscustomobject]@{Name = 'TabPage'; Prefix = 'tpg'; Type = 'TabControl'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'TableLayoutPanel'; Prefix = 'tlp'; Type = 'Container'; ChildTypes = @('Common', 'Container', 'MenuStrip', 'Context') },
+            [pscustomobject]@{Name = 'TextBox'; Prefix = 'tbx'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'Timer'; Prefix = 'tmr'; Type = 'Parentless'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'TreeView'; Prefix = 'tvw'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'WebBrowser'; Prefix = 'wbr'; Type = 'Common'; ChildTypes = @('Context') },
+            [pscustomobject]@{Name = 'ToolStripMenuItem'; Prefix = 'tmi'; Type = 'MenuStrip-Root'; ChildTypes = @('MenuStrip-Root', 'MenuStrip-Child') },
+            [pscustomobject]@{Name = 'ToolStripComboBox'; Prefix = 'tcb'; Type = 'MenuStrip-Root'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'ToolStripTextBox'; Prefix = 'ttb'; Type = 'MenuStrip-Root'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'ToolStripSeparator'; Prefix = 'tss'; Type = 'MenuStrip-Child'; ChildTypes = @() },
+            [pscustomobject]@{Name = 'Form'; Prefix = 'frm'; Type = 'Special'; ChildTypes = @('Common', 'Container', 'Context', 'MenuStrip') }
         )
 
         $Script:specialProps = @{
-            All = @('(DataBindings)','FlatAppearance','Location','Size','AutoSize','Dock','TabPages','SplitterDistance','UseCompatibleTextRendering','TabIndex',
-                    'TabStop','AnnuallyBoldedDates','BoldedDates','Lines','Items','DropDownItems','Panel1','Panel2','Text','AutoCompleteCustomSource','Nodes')
-            Before = @('Dock','AutoSize')
-            After = @('SplitterDistance','AnnuallyBoldedDates','BoldedDates','Items','Text')
-            BadReflector = @('UseCompatibleTextRendering','TabIndex','TabStop','IsMDIContainer')
-            Array = @('Items','AnnuallyBoldedDates','BoldedDates','MonthlyBoldedDates')
+            All          = @('(DataBindings)', 'FlatAppearance', 'Location', 'Size', 'AutoSize', 'Dock', 'TabPages', 'SplitterDistance', 'UseCompatibleTextRendering', 'TabIndex',
+                'TabStop', 'AnnuallyBoldedDates', 'BoldedDates', 'Lines', 'Items', 'DropDownItems', 'Panel1', 'Panel2', 'Text', 'AutoCompleteCustomSource', 'Nodes')
+            Before       = @('Dock', 'AutoSize')
+            After        = @('SplitterDistance', 'AnnuallyBoldedDates', 'BoldedDates', 'Items', 'Text')
+            BadReflector = @('UseCompatibleTextRendering', 'TabIndex', 'TabStop', 'IsMDIContainer')
+            Array        = @('Items', 'AnnuallyBoldedDates', 'BoldedDates', 'MonthlyBoldedDates')
         }
     } catch {
         Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Environment Setup."
@@ -2228,14 +2227,14 @@ $sbGUI = {
     </MenuStrip>
   </Form>
 "@
-    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form Initialization."}
+    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form Initialization." }
 
     #endregion Form Initialization
 
     #region Event Assignment
 
     try {
-            # Call to ScriptBlock
+        # Call to ScriptBlock
         $Script:refs['MainForm'].Add_FormClosing($eventSB['MainForm'].FormClosing)
         $Script:refs['MainForm'].Add_Load($eventSB['MainForm'].Load)
         $Script:refs['ms_Toolbox'].Add_Click($eventSB.ChangeView)
@@ -2263,13 +2262,13 @@ $sbGUI = {
         $Script:refs['lst_AvailableEvents'].Add_DoubleClick($eventSB['lst_AvailableEvents'].DoubleClick)
         $Script:refs['lst_AssignedEvents'].Add_DoubleClick($eventSB['lst_AssignedEvents'].DoubleClick)
 
-            # ScriptBlock Here
-        $Script:refs['Exit'].Add_Click({$Script:refs['MainForm'].Close()})
-        $Script:refs['Save'].Add_Click({ try {Save-Project} catch {if ( $_.Exception.Message -ne 'SaveCancelled' ) {throw $_}} })
-        $Script:refs['Save As'].Add_Click({ try {Save-Project -SaveAs} catch {if ( $_.Exception.Message -ne 'SaveCancelled' ) {throw $_}} })
-        $Script:refs['TreeView'].Add_DrawNode({$args[1].DrawDefault = $true})
-        $Script:refs['TreeView'].Add_NodeMouseClick({$this.SelectedNode = $args[1].Node})
-    } catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Event Assignment."}
+        # ScriptBlock Here
+        $Script:refs['Exit'].Add_Click({ $Script:refs['MainForm'].Close() })
+        $Script:refs['Save'].Add_Click({ try { Save-Project } catch { if ( $_.Exception.Message -ne 'SaveCancelled' ) { throw $_ } } })
+        $Script:refs['Save As'].Add_Click({ try { Save-Project -SaveAs } catch { if ( $_.Exception.Message -ne 'SaveCancelled' ) { throw $_ } } })
+        $Script:refs['TreeView'].Add_DrawNode({ $args[1].DrawDefault = $true })
+        $Script:refs['TreeView'].Add_NodeMouseClick({ $this.SelectedNode = $args[1].Node })
+    } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Event Assignment." }
 
     #endregion Event Assignment
 
@@ -2277,24 +2276,24 @@ $sbGUI = {
 
     if ( $noIssues ) {
         try {
-            @('All Controls','Common','Containers','Menus and ToolStrips','Miscellaneous').ForEach({
-                $treeNode = $Script:refs['trv_Controls'].Nodes.Add($_,$_)
+            @('All Controls', 'Common', 'Containers', 'Menus and ToolStrips', 'Miscellaneous').ForEach({
+                    $treeNode = $Script:refs['trv_Controls'].Nodes.Add($_, $_)
 
-                switch ($_) {
-                    'All Controls'         {$Script:supportedControls.Where({ @('Special','SplitContainer') -notcontains $_.Type }).Name.ForEach({$treeNode.Nodes.Add($_,$_)})}
-                    'Common'               {$Script:supportedControls.Where({ $_.Type -eq 'Common' }).Name.ForEach({$treeNode.Nodes.Add($_,$_)})}
-                    'Containers'           {$Script:supportedControls.Where({ $_.Type -eq 'Container' }).Name.ForEach({$treeNode.Nodes.Add($_,$_)})}
-                    'Menus and ToolStrips' {$Script:supportedControls.Where({ $_.Type -eq 'Context' -or $_.Type -match "^MenuStrip" }).Name.ForEach({$treeNode.Nodes.Add($_,$_)})}
-                    'Miscellaneous'        {$Script:supportedControls.Where({ @('TabControl','Parentless') -match "^$($_.Type)$" }).Name.ForEach({$treeNode.Nodes.Add($_,$_)})}
-                }
-            })
+                    switch ($_) {
+                        'All Controls' { $Script:supportedControls.Where({ @('Special', 'SplitContainer') -notcontains $_.Type }).Name.ForEach({ $treeNode.Nodes.Add($_, $_) }) }
+                        'Common' { $Script:supportedControls.Where({ $_.Type -eq 'Common' }).Name.ForEach({ $treeNode.Nodes.Add($_, $_) }) }
+                        'Containers' { $Script:supportedControls.Where({ $_.Type -eq 'Container' }).Name.ForEach({ $treeNode.Nodes.Add($_, $_) }) }
+                        'Menus and ToolStrips' { $Script:supportedControls.Where({ $_.Type -eq 'Context' -or $_.Type -match "^MenuStrip" }).Name.ForEach({ $treeNode.Nodes.Add($_, $_) }) }
+                        'Miscellaneous' { $Script:supportedControls.Where({ @('TabControl', 'Parentless') -match "^$($_.Type)$" }).Name.ForEach({ $treeNode.Nodes.Add($_, $_) }) }
+                    }
+                })
 
-            $Script:refs['trv_Controls'].Nodes.Where({$_.Name -eq 'Common'}).Expand()
+            $Script:refs['trv_Controls'].Nodes.Where({ $_.Name -eq 'Common' }).Expand()
 
             [void]$Script:refs['lst_AssignedEvents'].Items.Add('No Events')
             $Script:refs['lst_AssignedEvents'].Enabled = $false
 
-                # Add the Initial Form TreeNode
+            # Add the Initial Form TreeNode
             Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName MainForm
 
             Remove-Variable -Name eventSB, reuseContextInfo
@@ -2303,8 +2302,8 @@ $sbGUI = {
             $noIssues = $false
         }
 
-            # Load icon from Base64String
-            <#
+        # Load icon from Base64String
+        <#
                 # Converts image to Base64String
                 $encodedImage = [convert]::ToBase64String((get-content $inputfile -encoding byte))
                 $encodedImage -replace ".{80}", "$&`r`n" | set-content $outputfile
@@ -2349,10 +2348,10 @@ vs7bAAAAAElFTkSuQmCC
             $noIssues = $false
         }
 
-            # Declare Strings Used During Script File Generation
+        # Declare Strings Used During Script File Generation
         $Script:templateText = @{
-            Notes = ([string[]]`
-                "<#",
+            Notes                               = ([string[]]`
+                    "<#",
                 "    .NOTES",
                 "    ===========================================================================",
                 "        FileName:  FNAME",
@@ -2369,18 +2368,18 @@ vs7bAAAAAElFTkSuQmCC
                 "#>",
                 ""
             )
-            Start_STAScriptBlock = ([string[]]`
-                "# ScriptBlock to Execute in STA Runspace",
+            Start_STAScriptBlock                = ([string[]]`
+                    "# ScriptBlock to Execute in STA Runspace",
                 "`$sbGUI = {",
                 "    param(`$BaseDir)",
                 ""
             )
-            StartRegion_Functions = ([string[]]`
-                "    #region Functions",
+            StartRegion_Functions               = ([string[]]`
+                    "    #region Functions",
                 ""
             )
-            Function_Update_ErrorLog = ([string[]]`
-                "    function Update-ErrorLog {",
+            Function_Update_ErrorLog            = ([string[]]`
+                    "    function Update-ErrorLog {",
                 "        param(",
                 "            [System.Management.Automation.ErrorRecord]`$ErrorRecord,",
                 "            [string]`$Message,",
@@ -2400,8 +2399,8 @@ vs7bAAAAAElFTkSuQmCC
                 "    }",
                 ""
             )
-            Function_ConvertFrom_WinFormsXML = ([string[]]`
-                "    function ConvertFrom-WinFormsXML {",
+            Function_ConvertFrom_WinFormsXML    = ([string[]]`
+                    "    function ConvertFrom-WinFormsXML {",
                 "        param(",
                 "            [Parameter(Mandatory=`$true)]`$Xml,",
                 "            [string]`$Reference,",
@@ -2469,8 +2468,8 @@ vs7bAAAAAElFTkSuQmCC
                 "    }",
                 ""
             )
-            Function_Get_CustomControl = ([string[]]`
-                "    function Get-CustomControl {",
+            Function_Get_CustomControl          = ([string[]]`
+                    "    function Get-CustomControl {",
                 "        param(",
                 "            [Parameter(Mandatory=`$true)][hashtable]`$ControlInfo,",
                 "            [string]`$Reference,",
@@ -2493,68 +2492,68 @@ vs7bAAAAAElFTkSuQmCC
                 "    }",
                 ""
             )
-            EndRegion_Functions = ([string[]]`
-                "    #endregion Functions",
+            EndRegion_Functions                 = ([string[]]`
+                    "    #endregion Functions",
                 ""
             )
-            StartRegion_Events = ([string[]]`
-                "    #region Event ScriptBlocks",
+            StartRegion_Events                  = ([string[]]`
+                    "    #region Event ScriptBlocks",
                 "",
                 "    `$eventSB = @{"
             )
-            EndRegion_Events = ([string[]]`
-                "    }",
+            EndRegion_Events                    = ([string[]]`
+                    "    }",
                 "",
                 "    #endregion Event ScriptBlocks",
                 ""
             )
-            StartRegion_ChildForms = ([string[]]`
-                "    #region Child Forms",
+            StartRegion_ChildForms              = ([string[]]`
+                    "    #region Child Forms",
                 "",
                 "    `$Script:childFormInfo = @{"
             )
-            EndRegion_ChildForms = ([string[]]`
-                "    }",
+            EndRegion_ChildForms                = ([string[]]`
+                    "    }",
                 "",
                 "    #endregion Child Forms",
                 ""
             )
-            StartRegion_Timers = ([string[]]`
-                "    #region Timers",
+            StartRegion_Timers                  = ([string[]]`
+                    "    #region Timers",
                 "",
                 "    `$Script:timerInfo = @{",
                 ""
             )
-            EndRegion_Timers = ([string[]]`
-                "    }",
+            EndRegion_Timers                    = ([string[]]`
+                    "    }",
                 "",
                 "    #endregion Timers",
                 ""
             )
-            StartRegion_Dialogs = ([string[]]`
-                "    #region Dialogs",
+            StartRegion_Dialogs                 = ([string[]]`
+                    "    #region Dialogs",
                 "",
                 "    `$Script:dialogInfo = @{"
             )
-            EndRegion_Dialogs = ([string[]]`
-                "    }",
+            EndRegion_Dialogs                   = ([string[]]`
+                    "    }",
                 "",
                 "    #endregion Dialogs",
                 ""
             )
-            StartRegion_ContextMenuStrips = ([string[]]`
-                "    #region Reusable ContextMenuStrips",
+            StartRegion_ContextMenuStrips       = ([string[]]`
+                    "    #region Reusable ContextMenuStrips",
                 "",
                 "    `$Script:reuseContextInfo = @{"
             )
-            EndRegion_ContextMenuStrips = ([string[]]`
-                "    }",
+            EndRegion_ContextMenuStrips         = ([string[]]`
+                    "    }",
                 "",
                 "    #endregion Reusable ContextMenuStrips",
                 ""
             )
-            Region_EnvSetup = ([string[]]`
-                "    #region Environment Setup",
+            Region_EnvSetup                     = ([string[]]`
+                    "    #region Environment Setup",
                 "",
                 "    try {",
                 "        Add-Type -AssemblyName System.Windows.Forms",
@@ -2566,19 +2565,19 @@ vs7bAAAAAElFTkSuQmCC
                 "    #endregion Environment Setup",
                 ""
             )
-            StartRegion_EventAssignment = ([string[]]`
-                "    #region Event Assignment",
+            StartRegion_EventAssignment         = ([string[]]`
+                    "    #region Event Assignment",
                 "",
                 "    try {"
             )
-            EndRegion_EventAssignment = ([string[]]`
-                "    } catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered during Event Assignment.`"}",
+            EndRegion_EventAssignment           = ([string[]]`
+                    "    } catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered during Event Assignment.`"}",
                 "",
                 "    #endregion Event Assignment",
                 ""
             )
-            Region_OtherActions = ([string[]]`
-                "    #region Other Actions Before ShowDialog",
+            Region_OtherActions                 = ([string[]]`
+                    "    #region Other Actions Before ShowDialog",
                 "",
                 "    try {",
                 "        Remove-Variable -Name eventSB",
@@ -2589,7 +2588,7 @@ vs7bAAAAAElFTkSuQmCC
                 "        # Show the form"
             )
             Region_AfterClose_EndSTAScriptBlock = ([string[]]`
-                "    <#",
+                    "    <#",
                 "    #region Actions After Form Closed",
                 "",
                 "    try {",
@@ -2601,50 +2600,50 @@ vs7bAAAAAElFTkSuQmCC
                 "}",
                 ""
             )
-            Region_StartPoint = ([string[]]`
+            Region_StartPoint                   = ([string[]]`
                     "#region Start Point of Execution",
-                    "",
-                    "    # Initialize STA Runspace",
-                    "`$rsGUI = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()",
-                    "`$rsGUI.ApartmentState = 'STA'",
-                    "`$rsGUI.ThreadOptions = 'ReuseThread'",
-                    "`$rsGUI.Open()",
-                    "",
-                    "    # Create the PSCommand, Load into Runspace, and BeginInvoke",
-                    "`$cmdGUI = [Management.Automation.PowerShell]::Create().AddScript(`$sbGUI).AddParameter('BaseDir',`$PSScriptRoot)",
-                    "`$cmdGUI.RunSpace = `$rsGUI",
-                    "`$handleGUI = `$cmdGUI.BeginInvoke()",
-                    "",
-                    "    # Hide Console Window",
-                    "Add-Type -Name Window -Namespace Console -MemberDefinition '",
-                    "[DllImport(`"Kernel32.dll`")]",
-                    "public static extern IntPtr GetConsoleWindow();",
-                    "",
-                    "[DllImport(`"user32.dll`")]",
-                    "public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);",
-                    "'",
-                    "",
-                    "[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)",
-                    "",
-                    "    #Loop Until GUI Closure",
-                    "while ( `$handleGUI.IsCompleted -eq `$false ) {Start-Sleep -Seconds 5}",
-                    "",
-                    "    # Dispose of GUI Runspace/Command",
-                    "`$cmdGUI.EndInvoke(`$handleGUI)",
-                    "`$cmdGUI.Dispose()",
-                    "`$rsGUI.Dispose()",
-                    "",
-                    "Exit",
-                    "",
-                    "#endregion Start Point of Execution"
+                "",
+                "    # Initialize STA Runspace",
+                "`$rsGUI = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()",
+                "`$rsGUI.ApartmentState = 'STA'",
+                "`$rsGUI.ThreadOptions = 'ReuseThread'",
+                "`$rsGUI.Open()",
+                "",
+                "    # Create the PSCommand, Load into Runspace, and BeginInvoke",
+                "`$cmdGUI = [Management.Automation.PowerShell]::Create().AddScript(`$sbGUI).AddParameter('BaseDir',`$PSScriptRoot)",
+                "`$cmdGUI.RunSpace = `$rsGUI",
+                "`$handleGUI = `$cmdGUI.BeginInvoke()",
+                "",
+                "    # Hide Console Window",
+                "Add-Type -Name Window -Namespace Console -MemberDefinition '",
+                "[DllImport(`"Kernel32.dll`")]",
+                "public static extern IntPtr GetConsoleWindow();",
+                "",
+                "[DllImport(`"user32.dll`")]",
+                "public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);",
+                "'",
+                "",
+                "[Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)",
+                "",
+                "    #Loop Until GUI Closure",
+                "while ( `$handleGUI.IsCompleted -eq `$false ) {Start-Sleep -Seconds 5}",
+                "",
+                "    # Dispose of GUI Runspace/Command",
+                "`$cmdGUI.EndInvoke(`$handleGUI)",
+                "`$cmdGUI.Dispose()",
+                "`$rsGUI.Dispose()",
+                "",
+                "Exit",
+                "",
+                "#endregion Start Point of Execution"
             )
         }
     }
 
     #endregion Other Actions Before ShowDialog
 
-        # Show the form
-    try {[void]$Script:refs['MainForm'].ShowDialog()} catch {Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered unexpectedly at ShowDialog."}
+    # Show the form
+    try { [void]$Script:refs['MainForm'].ShowDialog() } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered unexpectedly at ShowDialog." }
 
     <#
     #region Actions After Form Closed
@@ -2659,18 +2658,18 @@ vs7bAAAAAElFTkSuQmCC
 
 #region Start Point of Execution
 
-    # Initialize STA Runspace
+# Initialize STA Runspace
 $rsGUI = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
 $rsGUI.ApartmentState = 'STA'
 $rsGUI.ThreadOptions = 'ReuseThread'
 $rsGUI.Open()
 
-    # Create the PSCommand, Load into Runspace, and BeginInvoke
-$cmdGUI = [Management.Automation.PowerShell]::Create().AddScript($sbGUI).AddParameter('BaseDir',$PSScriptRoot)
+# Create the PSCommand, Load into Runspace, and BeginInvoke
+$cmdGUI = [Management.Automation.PowerShell]::Create().AddScript($sbGUI).AddParameter('BaseDir', $PSScriptRoot)
 $cmdGUI.RunSpace = $rsGUI
 $handleGUI = $cmdGUI.BeginInvoke()
 
-    # Hide Console Window
+# Hide Console Window
 Add-Type -Name Window -Namespace Console -MemberDefinition '
 [DllImport("Kernel32.dll")]
 public static extern IntPtr GetConsoleWindow();
@@ -2681,10 +2680,10 @@ public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
 
 [Console.Window]::ShowWindow([Console.Window]::GetConsoleWindow(), 0)
 
-    #Loop Until GUI Closure
-while ( $handleGUI.IsCompleted -eq $false ) {Start-Sleep -Seconds 5}
+#Loop Until GUI Closure
+while ( $handleGUI.IsCompleted -eq $false ) { Start-Sleep -Seconds 5 }
 
-    # Dispose of GUI Runspace/Command
+# Dispose of GUI Runspace/Command
 $cmdGUI.EndInvoke($handleGUI)
 $cmdGUI.Dispose()
 $rsGUI.Dispose()
