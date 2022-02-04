@@ -675,7 +675,13 @@ $sbGUI = {
                 try {
                     [void]$saveDialog.ShowDialog()
 
-                    if (( $saveDialog.FileName -ne '' ) -and ( $saveDialog.FileName -ne 'NewProject.fbs' )) {$projectName = $saveDialog.FileName | Split-Path -Leaf} else {$projectName = ''}
+                    if (( $saveDialog.FileName -ne '' ) -and ( $saveDialog.FileName -ne 'NewProject.fbs' )) {
+                        $projectName = $saveDialog.FileName | Split-Path -Leaf
+                        $Script:projectsDir = $saveDialog.FileName | Split-Path -Parent
+                        if ( (Test-Path -Path "$($Script:projectsDir)") -eq $false ) {New-Item -Path "$($Script:projectsDir)" -ItemType Directory | Out-Null}
+                    } else {
+                        $projectName = ''
+                    }
                 } catch {
                     Update-ErrorLog -ErrorRecord $_ -Message 'Exception encountered while selecting Save file name.'
                     $projectName = ''
@@ -2063,8 +2069,9 @@ $sbGUI = {
         Add-Type -AssemblyName System.Drawing
 
             # Confirm SavedProjects directory exists and set SavedProjects directory
-        $Script:projectsDir = "$($env:UserProfile)\Documents\WinFormsCreator"
-        if ( (Test-Path -Path "$($Script:projectsDir)") -eq $false ) {New-Item -Path "$($Script:projectsDir)" -ItemType Directory | Out-Null}
+        if (-not $Script:projectsDir) {
+        $Script:projectsDir = "$([Environment]::GetFolderPath("MyDocuments"))\WinFormsCreator"
+        }
 
             # Set Misc Variables
         $Script:lastUIKeyUp = Get-Date
