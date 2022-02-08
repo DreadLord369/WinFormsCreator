@@ -93,6 +93,8 @@ param(
 $sbGUI = {
     param($BaseDir)
 
+    $Script:snappingDistance = 5
+
     #region Functions
 
     function Update-ErrorLog {
@@ -350,6 +352,7 @@ $sbGUI = {
 
                     # Add the selected object control buttons
                     $Script:sButtons = $null
+                    $Script:sButtonsStartPos = @{}
                     Remove-Variable -Name sButtons -Scope Script -ErrorAction SilentlyContinue
 
                     ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_SizeAll" Cursor="SizeAll" BackColor="Black" Size="8,8" Visible="False" />'
@@ -364,6 +367,12 @@ $sbGUI = {
 
                     # Add the Mouse events to each of the selected object control buttons
                     $sButtons.GetEnumerator().ForEach({
+                            $_.Value.Add_MouseDown({
+                                    param($SenderObj, $e)
+                                    if ($e.Button -eq 'Left') {
+                                        $Script:LeftMBStartPos = [System.Windows.Forms.Cursor]::Position
+                                    }
+                                })
                             $_.Value.Add_MouseMove({
                                     param($SenderObj, $e)
 
@@ -376,52 +385,50 @@ $sbGUI = {
                                                 $sObj = $Script:sRect
 
                                                 $msObj = @{}
+                                                $msObj.sButtonName = $SenderObj.Name
 
                                                 switch ($SenderObj.Name) {
                                                     btn_SizeAll {
-                                                        if (( @('FlowLayoutPanel', 'TableLayoutPanel') -contains $Script:refs['PropertyGrid'].SelectedObject.Parent.GetType().Name ) -or
-                                                       ( $Script:refs['PropertyGrid'].SelectedObject.Dock -ne 'None' )) {
+                                                        if (( @('FlowLayoutPanel', 'TableLayoutPanel') -contains $Script:refs['PropertyGrid'].SelectedObject.Parent.GetType().Name ) -or ( $Script:refs['PropertyGrid'].SelectedObject.Dock -ne 'None' )) {
                                                             $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
                                                         } else {
-                                                            $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), ($currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                            $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:LeftMBStartPos.X), ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
                                                         }
-                                                        $newSize = $Script:sRect.Size
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(0, 0)
                                                     }
                                                     btn_TLeft {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), ($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:LeftMBStartPos.X), ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($Script:LeftMBStartPos.X - $currentMousePOS.X), ($Script:LeftMBStartPos.Y - $currentMousePOS.Y))
                                                     }
                                                     btn_TRight {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($currentMousePOS.X - $Script:LeftMBStartPos.X), ($Script:LeftMBStartPos.Y - $currentMousePOS.Y))
                                                     }
                                                     btn_BLeft {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), 0)
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:LeftMBStartPos.X), 0)
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($Script:LeftMBStartPos.X - $currentMousePOS.X), ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
                                                     }
                                                     btn_BRight {
                                                         $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($currentMousePOS.X - $Script:LeftMBStartPos.X), ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
                                                     }
                                                     btn_MLeft {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:oldMousePOS.X), 0)
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $Script:oldMousePOS.X - $currentMousePOS.X), $sObj.Size.Height)
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(($currentMousePOS.X - $Script:LeftMBStartPos.X), 0)
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($Script:LeftMBStartPos.X - $currentMousePOS.X), 0)
                                                     }
                                                     btn_MRight {
                                                         $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
-                                                        $newSize = New-Object System.Drawing.Size(($sObj.Size.Width + $currentMousePOS.X - $Script:oldMousePOS.X), $sObj.Size.Height)
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(($currentMousePOS.X - $Script:LeftMBStartPos.X), 0)
                                                     }
                                                     btn_MTop {
-                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:oldMousePOS.Y))
-                                                        $newSize = New-Object System.Drawing.Size($sObj.Size.Width, ($sObj.Size.Height + $Script:oldMousePOS.Y - $currentMousePOS.Y))
+                                                        $msObj.LocOffset = New-Object System.Drawing.Point(0, ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(0, ($Script:LeftMBStartPos.Y - $currentMousePOS.Y))
                                                     }
                                                     btn_MBottom {
                                                         $msObj.LocOffset = New-Object System.Drawing.Point(0, 0)
-                                                        $newSize = New-Object System.Drawing.Size($sObj.Size.Width, ($sObj.Size.Height + $currentMousePOS.Y - $Script:oldMousePOS.Y))
+                                                        $msObj.SizeOffset = New-Object System.Drawing.Size(0, ($currentMousePOS.Y - $Script:LeftMBStartPos.Y))
                                                     }
                                                 }
-
-                                                $msObj.Size = $newSize
 
                                                 $Script:MouseMoving = $true
                                                 Move-SButtons -Object $msObj
@@ -433,11 +440,9 @@ $sbGUI = {
 
                                                 $newLocation = New-Object System.Drawing.Point(($Script:sRect.Location.X - (($clientParent.X - $clientForm.X) * -1)), ($Script:sRect.Location.Y - (($clientParent.Y - $clientForm.Y) * -1)))
 
-                                                $Script:refs['PropertyGrid'].SelectedObject.Size = $Script:sRect.Size
-                                                $Script:refs['PropertyGrid'].SelectedObject.Location = $newLocation
+                                                $Script:refs['PropertyGrid'].SelectedObject.Size = $sRect.Size
+                                                $Script:refs['PropertyGrid'].SelectedObject.Location = $sRect.Location
                                             }
-
-                                            $Script:oldMousePos = $currentMousePOS
 
                                             $Script:refs['PropertyGrid'].Refresh()
                                         } else { $Script:oldMousePos = [System.Windows.Forms.Cursor]::Position }
@@ -589,67 +594,148 @@ $sbGUI = {
         
         if ( ($Script:supportedControls.Where({ $_.Type -eq 'Parentless' }).Name + @('Form', 'ToolStripMenuItem', 'ToolStripComboBox', 'ToolStripTextBox', 'ToolStripSeparator', 'ContextMenuStrip')) -notcontains $Object.GetType().Name ) {
             $newSize = $Object.Size
+            $InitialLocation = $false
+            
+                $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
+            $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
+            $refParent = $Script:refs['MainForm']
+            $clientParent = $refParent.PointToClient([System.Drawing.Point]::Empty)
             
             if ( $Object.GetType().Name -ne 'HashTable' ) {
-                $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
                 $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $true })
-                $newLoc = $Object.PointToClient([System.Drawing.Point]::Empty)
                 
-                if ( $Script:MouseMoving -eq $true ) {
-                    $clientParent = $Object.Parent.PointToClient([System.Drawing.Point]::Empty)
-                    $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
-                    $clientOffset = New-Object System.Drawing.Point((($clientParent.X - $clientForm.X) * -1), (($clientParent.Y - $clientForm.Y) * -1))
-                } else { $clientOffset = New-Object System.Drawing.Point(0, 0) }
+                $newLoc = New-Object System.Drawing.Point($Object.Location.X, $Object.Location.Y)
                 
-                $newLoc.X = ($newLoc.X * -1) - $refFID.Location.X - $refs['MainForm'].Location.X - $clientOffset.X - $Script:refs['ms_Left'].Size.Width - 18
-                $newLoc.Y = ($newLoc.Y * -1) - $refFID.Location.Y - $refs['MainForm'].Location.Y - $clientOffset.Y - 108
+                $InitialLocation = $true
 
-                if ( $Script:refs['pnl_Left'].Visible -eq $true ) { $newLoc.X = $newLoc.X - $Script:refs['pnl_Left'].Size.Width - $Script:refs['lbl_Left'].Size.Width }
-            } else { $newLoc = New-Object System.Drawing.Point(($Script:sButtons['btn_TLeft'].Location.X + $Object.LocOffset.X), ($Script:sButtons['btn_TLeft'].Location.Y + $Object.LocOffset.Y)) }
+            } else {
+                $newLoc = New-Object System.Drawing.Point(($Script:sButtonsStartPos['btn_TLeft'].X + $Script:sButtons['btn_TLeft'].Width - [Math]::Abs($clientForm.X - $clientParent.X) + $Object.LocOffset.X), ($Script:sButtonsStartPos['btn_TLeft'].Y + $Script:sButtons['btn_TLeft'].Height - [Math]::Abs($clientForm.Y - $clientParent.Y) + $Object.LocOffset.Y))
+                $newSize = New-Object System.Drawing.Size(($Script:sButtonsStartPos['btn_BRight'].X - ($Script:sButtonsStartPos['btn_TLeft'].X + $Script:sButtons['btn_TLeft'].Width) + $Object.SizeOffset.Width), ($Script:sButtonsStartPos['btn_BRight'].Y - ($Script:sButtonsStartPos['btn_TLeft'].Y + $Script:sButtons['btn_TLeft'].Height) + $Object.SizeOffset.Height))
+                
+                # Check for snapping
+                $SnappingPoints = @()
+                $SnappingPoints += (New-Object System.Drawing.Point(0, 0))
+                $SnappingPoints += (New-Object System.Drawing.Point(($refFID.Width - 16), ($refFID.Height - 39)))
+                $refFID.Controls.Where({ ($sButtons.Keys + $Script:refs['PropertyGrid'].SelectedObject.Name) -notcontains $_.Name }).ForEach({
+                        $Script:refs['PropertyGrid'].SelectedObject.Text = $_.Name + " | " + $Script:refs['PropertyGrid'].SelectedObject.Name
+                        $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X), ($_.Location.Y)))
+                        $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
+                    })
+                
+                $SnappedX = $false
+                $SnappedY = $false
+                $SnappingPoints.ForEach({
+                        $Snap = $_
+                
+                        if (-not $SnappedX) {
+                            # Prioritise snap left over snap right (snap left last)
+                            if ([Math]::Abs($newLoc.X + $newSize.Width - $Snap.X) -lt $snappingDistance) {
+                                # Snap Right
+                                $newLoc.X = $Snap.X - $newSize.Width
+                                $SnappedX = $true
+                                if ($Object.sButtonName -in 'btn_TRight', 'btn_MRight', 'btn_BRight') {
+                                    $newSize.Width = $sRect.Right - $newLoc.X
+                                }
+                            }
+                            if ([Math]::Abs($newLoc.X - $Snap.X) -lt $snappingDistance) {
+                                # Snap Left
+                                $newLoc.X = $Snap.X
+                                $SnappedX = $true
+                                if ($Object.sButtonName -in 'btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                                    $newSize.Width = $sRect.Right - $newLoc.X
+                                }
+                            }
+                        }
+
+                        if (-not $SnappedY) {
+                            # Prioritise snap top over snap bottom (snap top last)
+                            if ([Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y) -lt $snappingDistance) {
+                                # Snap Bottom
+                                $newLoc.Y = $Snap.Y - $newSize.Height
+                                $SnappedY = $true
+                                if ($Object.sButtonName -in 'btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                                    $newSize.Height = $sRect.Bottom - $newLoc.Y
+                                }
+                            }
+                            if ([Math]::Abs($newLoc.Y - $Snap.Y) -lt $snappingDistance) {
+                                # Snap Top
+                                $newLoc.Y = $Snap.Y
+                                $SnappedY = $true
+                                if ($Object.sButtonName -in 'btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                                    $newSize.Height = $sRect.Bottom - $newLoc.Y
+                                }
+                            }
+                        }
+                    })
+            }
 
             $Script:sRect = New-Object System.Drawing.Rectangle($newLoc, $newSize)
+            $sButtonsLocation = New-Object System.Drawing.Point(($newLoc.X + [Math]::Abs($clientForm.X - $clientParent.X)), ($newLoc.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
+
+            $Script:sButtons['btn_SizeAll'].Location = New-Object System.Drawing.Point(($sButtonsLocation.X - 4), ($sButtonsLocation.Y - 4))
+            if ($InitialLocation) { $Script:sButtonsStartPos['btn_SizeAll'] = $Script:sButtons['btn_SizeAll'].Location }
+            $Script:sButtons['btn_SizeAll'].Size = New-Object System.Drawing.Size(($newSize.Width + 8), ($newSize.Height + 8))
+            $Script:sButtons['btn_SizeAll'].BringToFront()
 
             $Script:sButtons.GetEnumerator().ForEach({
                     $btn = $_.Value
 
                     switch ($btn.Name) {
-                        btn_SizeAll { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + 13), $newLoc.Y) }
-                        btn_TLeft { $btn.Location = New-Object System.Drawing.Point($newLoc.X, $newLoc.Y) }
-                        btn_TRight { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), $newLoc.Y) }
-                        btn_BLeft { $btn.Location = New-Object System.Drawing.Point($newLoc.X, ($newLoc.Y + $newSize.Height - 8)) }
-                        btn_BRight { $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), ($newLoc.Y + $newSize.Height - 8)) }
+                        btn_TLeft {
+                            $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X - 8), ($sButtonsLocation.Y - 8))
+                            if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
+                        }
+                        btn_TRight {
+                            $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + $newSize.Width), ($sButtonsLocation.Y - 8))
+                            if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
+                        }
+                        btn_BLeft {
+                            $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X - 8), ($sButtonsLocation.Y + $newSize.Height))
+                            if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
+                        }
+                        btn_BRight {
+                            $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + $newSize.Width), ($sButtonsLocation.Y + $newSize.Height))
+                            if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
+                        }
                         btn_MLeft {
-                            if ( $Object.Size.Height -gt 28 ) {
-                                $btn.Location = New-Object System.Drawing.Point($newLoc.X, ($newLoc.Y + ($newSize.Height / 2) - 4))
+                            if ( $newSize.Height -gt 28 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X - 8), ($sButtonsLocation.Y + ($newSize.Height / 2) - 4))
+                                if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MRight {
-                            if ( $Object.Size.Height -gt 28 ) {
-                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + $newSize.Width - 8), ($newLoc.Y + ($newSize.Height / 2) - 4))
+                            if ( $newSize.Height -gt 28 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + $newSize.Width), ($sButtonsLocation.Y + ($newSize.Height / 2) - 4))
+                                if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MTop {
-                            if ( $Object.Size.Width -gt 40 ) {
-                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4), $newLoc.Y)
+                            if ( $newSize.Width -gt 40 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + ($newSize.Width / 2) - 4), ($sButtonsLocation.Y - 8))
+                                if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MBottom {
-                            if ( $Object.Size.Width -gt 40 ) {
-                                $btn.Location = New-Object System.Drawing.Point(($newLoc.X + ($newSize.Width / 2) - 4), ($newLoc.Y + $newSize.Height - 8))
+                            if ( $newSize.Width -gt 40 ) {
+                                $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + ($newSize.Width / 2) - 4), ($sButtonsLocation.Y + $newSize.Height))
+                                if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                     }
 
+                    if ($btn.Name -ne 'btn_SizeAll') {
                     $btn.BringToFront()
                     $btn.Refresh()
+                    }
                 })
 
             $Script:refs['PropertyGrid'].SelectedObject.Refresh()
             $Script:refs['PropertyGrid'].SelectedObject.Parent.Refresh()
+            $sButtons['btn_SizeAll'].Invalidate()
         } else { $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $false }) }
     }
 
@@ -915,7 +1001,7 @@ $sbGUI = {
 
                         $Script:refs['TreeView'].Nodes.Clear()
 
-                        Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName MainForm
+                        Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName Form1
                     }
                 } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during start of New Project." }
             }
@@ -2298,7 +2384,7 @@ $sbGUI = {
             $Script:refs['lst_AssignedEvents'].Enabled = $false
 
             # Add the Initial Form TreeNode
-            Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName MainForm
+            Add-TreeNode -TreeObject $Script:refs['TreeView'] -ControlType Form -ControlName Form1
 
             Remove-Variable -Name eventSB, reuseContextInfo
         } catch {
