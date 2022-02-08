@@ -1853,7 +1853,11 @@ $sbGUI = {
                 [pscustomobject]@{
                     Name        = 'NameInput'
                     EventType   = 'Activated'
-                    ScriptBlock = { $this.Controls['UserInput'].Focus() }
+                    ScriptBlock = {
+                        $this.Controls['UserInput'].Focus()
+                        $this.Controls['UserInput'].SelectionStart = $this.Controls['UserInput'].TextLength
+                        $this.Controls['UserInput'].SelectionLength = 0
+                    }
                 },
                 [pscustomobject]@{
                     Name        = 'UserInput'
