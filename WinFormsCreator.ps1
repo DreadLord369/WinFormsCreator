@@ -127,7 +127,9 @@ $sbGUI = {
         try {
             if ( $Xml.GetType().Name -eq 'String' ) { $Xml = ([xml]$Xml).ChildNodes }
 
-            if ( $Xml.ToString() -ne 'SplitterPanel' ) { $newControl = New-Object System.Windows.Forms.$($Xml.ToString()) }
+            if ( $Xml.ToString() -ne 'SplitterPanel' -and $Xml.ToString() -ne 'TransparentPanel' ) { $newControl = New-Object System.Windows.Forms.$($Xml.ToString()) }
+
+            if ( $Xml.ToString() -eq 'TransparentPanel' ) { $newControl = New-Object TransparentPanel }
 
             if ( $ParentControl ) {
                 if ( $Xml.ToString() -match "^ToolStrip" ) {
@@ -355,15 +357,20 @@ $sbGUI = {
                     $Script:sButtonsStartPos = @{}
                     Remove-Variable -Name sButtons -Scope Script -ErrorAction SilentlyContinue
 
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_SizeAll" Cursor="SizeAll" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_TLeft" Cursor="SizeNWSE" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_TRight" Cursor="SizeNESW" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_BLeft" Cursor="SizeNESW" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_BRight" Cursor="SizeNWSE" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MLeft" Cursor="SizeWE" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MRight" Cursor="SizeWE" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MTop" Cursor="SizeNS" BackColor="Black" Size="8,8" Visible="False" />'
-                    ConvertFrom-WinFormsXML -ParentControl $form -Reference sButtons -Suppress -Xml '<Button Name="btn_MBottom" Cursor="SizeNS" BackColor="Black" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<TransparentPanel Name="btn_SizeAll" Cursor="SizeAll" Size="8,8" Visible="False" />'
+                    # ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Panel Name="btn_SizeAll" Cursor="SizeAll" BackColor="Black" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_TLeft" Cursor="SizeNWSE" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_TRight" Cursor="SizeNESW" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_BLeft" Cursor="SizeNESW" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_BRight" Cursor="SizeNWSE" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_MLeft" Cursor="SizeWE" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_MRight" Cursor="SizeWE" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_MTop" Cursor="SizeNS" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference sButtons -Suppress -Xml '<Label Name="btn_MBottom" Cursor="SizeNS" BackColor="White" Size="8,8" BorderStyle="FixedSingle" FlatStyle="Flat" Visible="False" />'
+
+                    $sButtons['btn_SizeAll'].borderDashStyle = [Windows.Forms.ButtonBorderStyle]::Dotted
+                    $sButtons['btn_SizeAll'].borderColor = [Drawing.Color]::Black
+                    $sButtons['btn_SizeAll'].BringToFront()
 
                     # Add the Mouse events to each of the selected object control buttons
                     $sButtons.GetEnumerator().ForEach({
@@ -379,7 +386,7 @@ $sbGUI = {
                                     try {
                                         $currentMousePOS = [System.Windows.Forms.Cursor]::Position
                                         # If mouse button equals left and there was a change in mouse position (reduces flicker due to control refreshes during Move-SButtons)
-                                        if (( $e.Button -eq 'Left' ) -and (( $currentMousePOS.X -ne $Script:oldMousePOS.X ) -or ( $currentMousePOS.Y -ne $Script:oldMousePOS.Y ))) {
+                                        if (( $e.Button -eq 'Left' ) -and (( $currentMousePOS.X -ne $Script:LeftMBStartPos.X ) -or ( $currentMousePOS.Y -ne $Script:LeftMBStartPos.Y ))) {
                                 
                                             if ( @('SplitterPanel', 'TabPage') -notcontains $Script:refs['PropertyGrid'].SelectedObject.GetType().Name ) {
                                                 $sObj = $Script:sRect
@@ -2160,6 +2167,40 @@ $sbGUI = {
     try {
         Add-Type -AssemblyName System.Windows.Forms
         Add-Type -AssemblyName System.Drawing
+        [System.Windows.Forms.Application]::EnableVisualStyles()
+
+        $TransparentPanelCSharp = @"
+using System;
+using System.Windows.Forms;
+using System.Drawing;
+public class TransparentPanel : Panel
+{   
+    public Color borderColor = Color.Black;
+    public ButtonBorderStyle borderDashStyle = ButtonBorderStyle.Dotted;
+    const int WS_EX_TRANSPARENT = 0x20;
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            CreateParams cp = base.CreateParams;
+            cp.ExStyle = cp.ExStyle | WS_EX_TRANSPARENT;
+            return cp;
+        }
+    }
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        
+    }
+    protected override void OnPaint(PaintEventArgs e) {
+        base.OnPaint(e);
+        Graphics g = e.Graphics;
+        Rectangle r = this.ClientRectangle;
+        ControlPaint.DrawBorder(g, r, this.borderColor, this.borderDashStyle);
+    }
+}
+"@
+
+        Add-Type -TypeDefinition $TransparentPanelCSharp -Language CSharp -ReferencedAssemblies 'System.Windows.Forms', 'System.Drawing'
 
         # Confirm SavedProjects directory exists and set SavedProjects directory
         if (-not $Script:projectsDir) {
