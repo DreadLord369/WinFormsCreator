@@ -629,47 +629,60 @@ $sbGUI = {
                         $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
                     })
                 
-                $SnappedX = $false
-                $SnappedY = $false
+                $Snapped = @{}
                 $SnappingPoints.ForEach({
                         $Snap = $_
                 
-                        if (-not $SnappedX) {
-                            # Prioritise snap left over snap right (snap left last)
-                            if ([Math]::Abs($newLoc.X + $newSize.Width - $Snap.X) -lt $snappingDistance) {
+                        # Prioritise snap left over snap right when moving control (snap left last)
+                        if (-not $Snapped.Right) {
+                            if ([Math]::Abs($newLoc.X + $newSize.Width - $Snap.X) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TRight', 'btn_MRight', 'btn_BRight') {
                                 # Snap Right
+                                $Snapped.Right = $true
+                                if ($Object.sButtonName -eq 'btn_SizeAll') {
                                 $newLoc.X = $Snap.X - $newSize.Width
-                                $SnappedX = $true
-                                if ($Object.sButtonName -in 'btn_TRight', 'btn_MRight', 'btn_BRight') {
-                                    $newSize.Width = $sRect.Right - $newLoc.X
+                                } else {
+                                    $newSize.Width = $Snap.X - $newLoc.X
                                 }
                             }
-                            if ([Math]::Abs($newLoc.X - $Snap.X) -lt $snappingDistance) {
+                        }
+                        if (-not $Snapped.Left) {
+                            if ([Math]::Abs($newLoc.X - $Snap.X) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
                                 # Snap Left
                                 $newLoc.X = $Snap.X
-                                $SnappedX = $true
-                                if ($Object.sButtonName -in 'btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                                $Snapped.Left = $true
+                                if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                    if ($Snapped.Right) {
+                                        $newSize.Width = $sRect.Left + $newSize.Width - $newLoc.X
+                                    } else {
                                     $newSize.Width = $sRect.Right - $newLoc.X
                                 }
                             }
                         }
+                        }
 
-                        if (-not $SnappedY) {
-                            # Prioritise snap top over snap bottom (snap top last)
-                            if ([Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y) -lt $snappingDistance) {
+                        # Prioritise snap top over snap bottom when moving control (snap top last)
+                        if (-not $Snapped.Bottom) {
+                            if ([Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_BLeft', 'btn_MBottom', 'btn_BRight') {
                                 # Snap Bottom
+                                $Snapped.Bottom = $true
+                                if ($Object.sButtonName -eq 'btn_SizeAll') {
                                 $newLoc.Y = $Snap.Y - $newSize.Height
-                                $SnappedY = $true
-                                if ($Object.sButtonName -in 'btn_BLeft', 'btn_MBottom', 'btn_BRight') {
-                                    $newSize.Height = $sRect.Bottom - $newLoc.Y
+                                } else {
+                                    $newSize.Height = $Snap.Y - $newLoc.Y
                                 }
                             }
-                            if ([Math]::Abs($newLoc.Y - $Snap.Y) -lt $snappingDistance) {
+                        }
+                        if (-not $Snapped.Top) {
+                            if ([Math]::Abs($newLoc.Y - $Snap.Y) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MTop', 'btn_TRight') {
                                 # Snap Top
                                 $newLoc.Y = $Snap.Y
-                                $SnappedY = $true
-                                if ($Object.sButtonName -in 'btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                                $Snapped.Top = $true
+                                if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                    if ($Snapped.Bottom) {
+                                        $newSize.Height = $sRect.Top + $newSize.Height - $newLoc.Y
+                                    } else {
                                     $newSize.Height = $sRect.Bottom - $newLoc.Y
+                                    }
                                 }
                             }
                         }
