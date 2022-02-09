@@ -635,9 +635,8 @@ $sbGUI = {
                 } else {
                 $SnappingPoints = @()
                 $SnappingPoints += (New-Object System.Drawing.Point(0, 0))
-                $SnappingPoints += (New-Object System.Drawing.Point(($refFID.Width - 16), ($refFID.Height - 39)))
-                $refFID.Controls.Where({ ($sButtons.Keys + $Script:refs['PropertyGrid'].SelectedObject.Name) -notcontains $_.Name }).ForEach({
-                        $Script:refs['PropertyGrid'].SelectedObject.Text = $_.Name + " | " + $Script:refs['PropertyGrid'].SelectedObject.Name
+                    $SnappingPoints += (New-Object System.Drawing.Point($refFID.ClientSize.Width, $refFID.ClientSize.Height))
+                    $refFID.Controls.Where({ $Script:refs['PropertyGrid'].SelectedObject.Name -ne $_.Name }).ForEach({
                         $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X), ($_.Location.Y)))
                         $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
                     })
