@@ -641,13 +641,59 @@ $sbGUI = {
                         $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
                     })
                 
-                $Snapped = @{}
+                    $ClosestSnaps = [ordered]@{
+                        Right = $null
+                        Left = $null
+                        Bottom = $null
+                        Top = $null
+                    }
+                    $Snapped = @{
+                        Left = $false
+                        Top = $false
+                        Right = $false
+                        Bottom = $false
+                    }
                 $SnappingPoints.ForEach({
                         $Snap = $_
                 
-                        # Prioritise snap left over snap right when moving control (snap left last)
-                        if (-not $Snapped.Right) {
-                            if ([Math]::Abs($newLoc.X + $newSize.Width - $Snap.X) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TRight', 'btn_MRight', 'btn_BRight') {
+                            #Right
+                            $RightDist = [Math]::Abs($newLoc.X + $newSize.Width - $Snap.X)
+                            if ($RightDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TRight', 'btn_MRight', 'btn_BRight') {
+                                if (-not $ClosestSnaps.Right -or $RightDist -lt $ClosestSnaps.Right[1]) {
+                                    $ClosestSnaps.Right = @($Snap, $RightDist)
+                                }
+                            }
+    
+                            #Left
+                            $LeftDist = [Math]::Abs($newLoc.X - $Snap.X)
+                            if ($LeftDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                                if (-not $ClosestSnaps.Left -or $LeftDist -lt $ClosestSnaps.Left[1]) {
+                                    $ClosestSnaps.Left = @($Snap, $LeftDist)
+                                }
+                            }
+    
+                            #Bottom
+                            $BottomDist = [Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y)
+                            if ($BottomDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                                if (-not $ClosestSnaps.Bottom -or $BottomDist -lt $ClosestSnaps.Bottom[1]) {
+                                    $ClosestSnaps.Bottom = @($Snap, $BottomDist)
+                                }
+                            }
+    
+                            #Top
+                            $TopDist = [Math]::Abs($newLoc.Y - $Snap.Y)
+                            if ($TopDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                                if (-not $ClosestSnaps.Top -or $TopDist -lt $ClosestSnaps.Top[1]) {
+                                    $ClosestSnaps.Top = @($Snap, $TopDist)
+                                }
+                            }
+                        }
+                    )
+                    $ClosestSnaps.GetEnumerator().Where({ $_.Value }).ForEach({
+                            $Snap = $_.Value[0]
+    
+                            switch ($_.Key) {
+                                Right {
                                 # Snap Right
                                 $Snapped.Right = $true
                                 if ($Object.sButtonName -eq 'btn_SizeAll') {
@@ -661,9 +707,7 @@ $sbGUI = {
                                     $snapLines['snap_Right'].BringToFront()
                                     $snapLines['snap_Right'].Invalidate()
                             }
-                        }
-                        if (-not $Snapped.Left) {
-                            if ([Math]::Abs($newLoc.X - $Snap.X) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                                Left {
                                 # Snap Left
                                 $newLoc.X = $Snap.X
                                 $Snapped.Left = $true
@@ -680,11 +724,7 @@ $sbGUI = {
                                     $snapLines['snap_Left'].BringToFront()
                                     $snapLines['snap_Left'].Invalidate()
                         }
-                        }
-
-                        # Prioritise snap top over snap bottom when moving control (snap top last)
-                        if (-not $Snapped.Bottom) {
-                            if ([Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                                Bottom {
                                 # Snap Bottom
                                 $Snapped.Bottom = $true
                                 if ($Object.sButtonName -eq 'btn_SizeAll') {
@@ -698,9 +738,7 @@ $sbGUI = {
                                     $snapLines['snap_Bottom'].BringToFront()
                                     $snapLines['snap_Bottom'].Invalidate()
                             }
-                        }
-                        if (-not $Snapped.Top) {
-                            if ([Math]::Abs($newLoc.Y - $Snap.Y) -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                                Top {
                                 # Snap Top
                                 $newLoc.Y = $Snap.Y
                                 $Snapped.Top = $true
