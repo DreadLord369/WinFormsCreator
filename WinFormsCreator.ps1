@@ -352,6 +352,15 @@ $sbGUI = {
                             $this.ParentForm.Refresh()
                         })
 
+                    # Add snap lines
+                    $Script:snapLines = $null
+                    Remove-Variable -Name snapLines -Scope Script -ErrorAction SilentlyContinue
+                    
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Left" BackColor="LightBlue" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Top" BackColor="LightBlue" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Right" BackColor="LightBlue" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Bottom" BackColor="LightBlue" Size="8,8" Visible="False" />'
+                    
                     # Add the selected object control buttons
                     $Script:sButtons = $null
                     $Script:sButtonsStartPos = @{}
@@ -610,6 +619,7 @@ $sbGUI = {
             
             if ( $Object.GetType().Name -ne 'HashTable' ) {
                 $Script:sButtons.GetEnumerator().ForEach({ $_.Value.Visible = $true })
+                $Script:snapLines.GetEnumerator().ForEach({ $_.Value.Visible = $false })
                 
                 $newLoc = New-Object System.Drawing.Point($Object.Location.X, $Object.Location.Y)
                 
@@ -643,6 +653,11 @@ $sbGUI = {
                                 } else {
                                     $newSize.Width = $Snap.X - $newLoc.X
                                 }
+                                    $snapLines['snap_Right'].Visible = $true
+                                    $snapLines['snap_Right'].Location = New-Object System.Drawing.Point(($Snap.X + [Math]::Abs($clientForm.X - $clientParent.X)), [Math]::Abs($clientForm.Y - $clientParent.Y))
+                                    $snapLines['snap_Right'].Size = New-Object System.Drawing.Size(1, $refFID.ClientSize.Height)
+                                    $snapLines['snap_Right'].BringToFront()
+                                    $snapLines['snap_Right'].Invalidate()
                             }
                         }
                         if (-not $Snapped.Left) {
@@ -657,6 +672,11 @@ $sbGUI = {
                                     $newSize.Width = $sRect.Right - $newLoc.X
                                 }
                             }
+                                    $snapLines['snap_Left'].Visible = $true
+                                    $snapLines['snap_Left'].Location = New-Object System.Drawing.Point(($Snap.X + [Math]::Abs($clientForm.X - $clientParent.X)), [Math]::Abs($clientForm.Y - $clientParent.Y))
+                                    $snapLines['snap_Left'].Size = New-Object System.Drawing.Size(1, $refFID.ClientSize.Height)
+                                    $snapLines['snap_Left'].BringToFront()
+                                    $snapLines['snap_Left'].Invalidate()
                         }
                         }
 
@@ -670,6 +690,11 @@ $sbGUI = {
                                 } else {
                                     $newSize.Height = $Snap.Y - $newLoc.Y
                                 }
+                                    $snapLines['snap_Bottom'].Visible = $true
+                                    $snapLines['snap_Bottom'].Location = New-Object System.Drawing.Point([Math]::Abs($clientForm.X - $clientParent.X), ($Snap.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
+                                    $snapLines['snap_Bottom'].Size = New-Object System.Drawing.Size($refFID.ClientSize.Width, 1)
+                                    $snapLines['snap_Bottom'].BringToFront()
+                                    $snapLines['snap_Bottom'].Invalidate()
                             }
                         }
                         if (-not $Snapped.Top) {
@@ -684,9 +709,22 @@ $sbGUI = {
                                     $newSize.Height = $sRect.Bottom - $newLoc.Y
                                     }
                                 }
+                                    $snapLines['snap_Top'].Visible = $true
+                                    $snapLines['snap_Top'].Location = New-Object System.Drawing.Point([Math]::Abs($clientForm.X - $clientParent.X), ($Snap.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
+                                    $snapLines['snap_Top'].Size = New-Object System.Drawing.Size($refFID.ClientSize.Width, 1)
+                                    $snapLines['snap_Top'].BringToFront()
+                                    $snapLines['snap_Top'].Invalidate()
                             }
                         }
-                    })
+                        }
+                    )
+    
+                    $Snapped.GetEnumerator().ForEach({
+                            if (-not $_.Value) {
+                                $snapLines["snap_$($_.Key)"].Visible = $false
+                            }
+                        }
+                    )
             }
 
             $Script:sRect = New-Object System.Drawing.Rectangle($newLoc, $newSize)
