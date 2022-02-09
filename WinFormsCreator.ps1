@@ -630,6 +630,9 @@ $sbGUI = {
                 $newSize = New-Object System.Drawing.Size(($Script:sButtonsStartPos['btn_BRight'].X - ($Script:sButtonsStartPos['btn_TLeft'].X + $Script:sButtons['btn_TLeft'].Width) + $Object.SizeOffset.Width), ($Script:sButtonsStartPos['btn_BRight'].Y - ($Script:sButtonsStartPos['btn_TLeft'].Y + $Script:sButtons['btn_TLeft'].Height) + $Object.SizeOffset.Height))
                 
                 # Check for snapping
+                if ([System.Windows.Input.Keyboard]::IsKeyDown('Ctrl')){
+                    $Script:snapLines.GetEnumerator().ForEach({ $_.Value.Visible = $false })
+                } else {
                 $SnappingPoints = @()
                 $SnappingPoints += (New-Object System.Drawing.Point(0, 0))
                 $SnappingPoints += (New-Object System.Drawing.Point(($refFID.Width - 16), ($refFID.Height - 39)))
@@ -725,6 +728,7 @@ $sbGUI = {
                             }
                         }
                     )
+                }
             }
 
             $Script:sRect = New-Object System.Drawing.Rectangle($newLoc, $newSize)
@@ -2218,6 +2222,7 @@ $sbGUI = {
     try {
         Add-Type -AssemblyName System.Windows.Forms
         Add-Type -AssemblyName System.Drawing
+        Add-Type -AssemblyName PresentationCore
         [System.Windows.Forms.Application]::EnableVisualStyles()
 
         $TransparentPanelCSharp = @"
