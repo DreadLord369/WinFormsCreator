@@ -2184,10 +2184,10 @@ $sbGUI = {
     <ToolStripMenuItem Name="MoveDown" ShortcutKeys="F6" ShortcutKeyDisplayString="F6" Text="Move Down" />
     <ToolStripSeparator Name="Sep1" />
     <ToolStripMenuItem Name="CopyNode" ShortcutKeys="Ctrl+C" Text="Copy" ShortcutKeyDisplayString="Ctrl+C" />
-    <ToolStripMenuItem Name="PasteNode" ShortcutKeys="Ctrl+P" Text="Paste" ShortcutKeyDisplayString="Ctrl+P" />
+    <ToolStripMenuItem Name="PasteNode" ShortcutKeys="Ctrl+V" Text="Paste" ShortcutKeyDisplayString="Ctrl+V" />
     <ToolStripSeparator Name="Sep2" />
     <ToolStripMenuItem Name="Rename" ShortcutKeys="Ctrl+R" Text="Rename" ShortcutKeyDisplayString="Ctrl+R" />
-    <ToolStripMenuItem Name="Delete" ShortcutKeys="Ctrl+D" Text="Delete" ShortcutKeyDisplayString="Ctrl+D" />
+    <ToolStripMenuItem Name="Delete" ShortcutKeys="Delete" Text="Delete" ShortcutKeyDisplayString="Delete" />
   </ContextMenuStrip>
 "@
             Events  = @(
@@ -2429,16 +2429,16 @@ public class TransparentPanel : Panel
         <ToolStripMenuItem Name="New" ShortcutKeys="Ctrl+N" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+N" Text="New" />
         <ToolStripMenuItem Name="Open" ShortcutKeys="Ctrl+O" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+O" Text="Open" />
         <ToolStripMenuItem Name="Save" ShortcutKeys="Ctrl+S" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+S" Text="Save" />
-        <ToolStripMenuItem Name="Save As" ShortcutKeys="Ctrl+Alt+S" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+Alt+S" Text="Save As" />
+        <ToolStripMenuItem Name="Save As" ShortcutKeys="Ctrl+Shift+S" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+Shift+S" Text="Save As" />
         <ToolStripSeparator Name="FileSep" DisplayStyle="Text" />
         <ToolStripMenuItem Name="Exit" ShortcutKeys="Ctrl+Alt+X" DisplayStyle="Text" ShortcutKeyDisplayString="Ctrl+Alt+X" Text="Exit" />
       </ToolStripMenuItem>
       <ToolStripMenuItem Name="ts_Edit" Text="Edit">
         <ToolStripMenuItem Name="Rename" ShortcutKeys="Ctrl+R" Text="Rename" ShortcutKeyDisplayString="Ctrl+R" />
-        <ToolStripMenuItem Name="Delete" ShortcutKeys="Ctrl+D" Text="Delete" ShortcutKeyDisplayString="Ctrl+D" />
+        <ToolStripMenuItem Name="Delete" ShortcutKeys="Delete" Text="Delete" ShortcutKeyDisplayString="Delete" />
         <ToolStripSeparator Name="EditSep1" />
         <ToolStripMenuItem Name="CopyNode" ShortcutKeys="Ctrl+C" Text="Copy" ShortcutKeyDisplayString="Ctrl+C" />
-        <ToolStripMenuItem Name="PasteNode" ShortcutKeys="Ctrl+P" Text="Paste" ShortcutKeyDisplayString="Ctrl+P" />
+        <ToolStripMenuItem Name="PasteNode" ShortcutKeys="Ctrl+V" Text="Paste" ShortcutKeyDisplayString="Ctrl+V" />
         <ToolStripSeparator Name="EditSep2" />
         <ToolStripMenuItem Name="Move Up" ShortcutKeys="F5" Text="Move Up" ShortcutKeyDisplayString="F5" />
         <ToolStripMenuItem Name="Move Down" ShortcutKeys="F6" Text="Move Down" ShortcutKeyDisplayString="F6" />
