@@ -1067,6 +1067,61 @@ $sbGUI = {
             }
         } else { throw 'SaveCancelled' }
     }
+
+    function Write-Setting {
+        param(
+            $Name,
+            $Value
+        )
+
+        $RegKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Software", $true)
+        $AppKey = $RegKey.OpenSubKey("WinFormsCreator", $true)
+        if (-not $AppKey) { $AppKey = $RegKey.CreateSubKey("WinFormsCreator") }
+        $AppKey.SetValue($Name, $Value)
+        $AppKey.Close()
+        $RegKey.Close()
+    }
+
+    function Read-Setting {
+        param(
+            $Name
+        )
+
+        $RegKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Software", $true)
+        $AppKey = $RegKey.OpenSubKey("WinFormsCreator", $true)
+        if (-not $AppKey) { return $null }
+        $Value = $AppKey.GetValue($Name)
+        $AppKey.Close()
+        $RegKey.Close()
+
+        return $Value
+    }
+
+    function Write-AllSettings {
+        Write-Setting -Name 'WindowX' -Value $refs['MainForm'].Restorebounds.Location.X
+        Write-Setting -Name 'WindowY' -Value $refs['MainForm'].Restorebounds.Location.Y
+        Write-Setting -Name 'WindowWidth' -Value $refs['MainForm'].Restorebounds.Width
+        Write-Setting -Name 'WindowHeight' -Value $refs['MainForm'].Restorebounds.Height
+        Write-Setting -Name 'WindowState' -Value $refs['MainForm'].WindowState
+    }
+
+    function Read-AllSettings {
+        $LocationX = Read-Setting -Name 'WindowX'
+        $LocationY = Read-Setting -Name 'WindowY'
+        $Width = Read-Setting -Name 'WindowWidth'
+        $Height = Read-Setting -Name 'WindowHeight'
+        $WindowState = Read-Setting -Name 'WindowState'
+
+        if ($LocationX) { $refs['MainForm'].Location = New-Object System.Drawing.Point($LocationX, $refs['MainForm'].Location.Y) }
+        if ($LocationY) { $refs['MainForm'].Location = New-Object System.Drawing.Point($refs['MainForm'].Location.X, $LocationY) }
+        if ($Width) { $refs['MainForm'].Width = $Width }
+        if ($Height) { $refs['MainForm'].Height = $Height }
+        if ($WindowState) {
+            if ($WindowState -ne 'Minimized') {
+                $refs['MainForm'].WindowState = $WindowState
+            }
+        }
+    }
     
     #endregion Functions
 
@@ -1076,6 +1131,7 @@ $sbGUI = {
         'MainForm'             = @{
             FormClosing = {
                 try {
+                    Write-AllSettings
                     $Script:refs['TreeView'].Nodes.ForEach({
                             $controlName = $_.Name
                             $controlType = $_.Text -replace " - .*$"
@@ -1084,6 +1140,11 @@ $sbGUI = {
                             else { $Script:refsFID[$controlType][$controlName].Objects[$controlName].Dispose() }
                         })
                 } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form closure." }
+            }
+            Load = {
+                try {
+                    Read-AllSettings
+                } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form load." }
             }
         }
         'New'                  = @{
