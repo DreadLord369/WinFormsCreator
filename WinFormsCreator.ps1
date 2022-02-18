@@ -2847,6 +2847,7 @@ vs7bAAAAAElFTkSuQmCC
                 "    try {",
                 "        Add-Type -AssemblyName System.Windows.Forms",
                 "        Add-Type -AssemblyName System.Drawing",
+                "        [System.Windows.Forms.Application]::EnableVisualStyles()",
                 "",
                 "",
                 "    } catch {Update-ErrorLog -ErrorRecord `$_ -Message `"Exception encountered during Environment Setup.`"}",
