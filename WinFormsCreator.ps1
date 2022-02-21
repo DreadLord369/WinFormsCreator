@@ -360,6 +360,8 @@ $sbGUI = {
                     ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Top" BackColor="LightBlue" Size="8,8" Visible="False" />'
                     ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Right" BackColor="LightBlue" Size="8,8" Visible="False" />'
                     ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_Bottom" BackColor="LightBlue" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_CenterV" BackColor="LightGreen" Size="8,8" Visible="False" />'
+                    ConvertFrom-WinFormsXML -ParentControl $refs['MainForm'] -Reference snapLines -Suppress -Xml '<Panel Name="snap_CenterH" BackColor="LightGreen" Size="8,8" Visible="False" />'
                     
                     # Add the selected object control buttons
                     $Script:sButtons = $null
@@ -612,7 +614,7 @@ $sbGUI = {
             $newSize = $Object.Size
             $InitialLocation = $false
             
-                $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
+            $refFID = $Script:refsFID.Form.Objects.Values.Where({ $_.GetType().Name -eq 'Form' })
             $clientForm = $refFID.PointToClient([System.Drawing.Point]::Empty)
             $refParent = $Script:refs['MainForm']
             $clientParent = $refParent.PointToClient([System.Drawing.Point]::Empty)
@@ -630,35 +632,41 @@ $sbGUI = {
                 $newSize = New-Object System.Drawing.Size(($Script:sButtonsStartPos['btn_BRight'].X - ($Script:sButtonsStartPos['btn_TLeft'].X + $Script:sButtons['btn_TLeft'].Width) + $Object.SizeOffset.Width), ($Script:sButtonsStartPos['btn_BRight'].Y - ($Script:sButtonsStartPos['btn_TLeft'].Y + $Script:sButtons['btn_TLeft'].Height) + $Object.SizeOffset.Height))
                 
                 # Check for snapping
-                if ([System.Windows.Input.Keyboard]::IsKeyDown('Ctrl')){
+                if ([System.Windows.Input.Keyboard]::IsKeyDown('Ctrl')) {
                     $Script:snapLines.GetEnumerator().ForEach({ $_.Value.Visible = $false })
                 } else {
-                $SnappingPoints = @()
-                $SnappingPoints += (New-Object System.Drawing.Point(0, 0))
+                    $SnappingPoints = @()
+                    $SnappingPoints += (New-Object System.Drawing.Point(0, 0))
                     $SnappingPoints += (New-Object System.Drawing.Point($refFID.ClientSize.Width, $refFID.ClientSize.Height))
+                    $SnappingPoints += (New-Object System.Drawing.Point(($refFID.ClientSize.Width / 2), ($refFID.ClientSize.Height / 2)))
                     $refFID.Controls.Where({ $Script:refs['PropertyGrid'].SelectedObject.Name -ne $_.Name }).ForEach({
-                        $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X), ($_.Location.Y)))
-                        $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
-                    })
+                            $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X), ($_.Location.Y)))
+                            $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width), ($_.Location.Y + $_.Height)))
+                            $SnappingPoints += (New-Object System.Drawing.Point(($_.Location.X + $_.Width / 2), ($_.Location.Y + $_.Height / 2)))
+                        })
                 
                     $ClosestSnaps = [ordered]@{
-                        Right = $null
-                        Left = $null
-                        Bottom = $null
-                        Top = $null
+                        Right   = $null
+                        Left    = $null
+                        Bottom  = $null
+                        Top     = $null
+                        CenterV = $null
+                        CenterH = $null
                     }
                     $Snapped = @{
-                        Left = $false
-                        Top = $false
-                        Right = $false
-                        Bottom = $false
+                        Left    = $false
+                        Top     = $false
+                        Right   = $false
+                        Bottom  = $false
+                        CenterV = $false
+                        CenterH = $false
                     }
-                $SnappingPoints.ForEach({
-                        $Snap = $_
+                    $SnappingPoints.ForEach({
+                            $Snap = $_
                 
                             #Right
                             $RightDist = [Math]::Abs($newLoc.X + $newSize.Width - $Snap.X)
-                            if ($RightDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TRight', 'btn_MRight', 'btn_BRight') {
+                            if ($RightDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_TRight', 'btn_MRight', 'btn_BRight') {
                                 if (-not $ClosestSnaps.Right -or $RightDist -lt $ClosestSnaps.Right[1]) {
                                     $ClosestSnaps.Right = @($Snap, $RightDist)
                                 }
@@ -666,7 +674,7 @@ $sbGUI = {
     
                             #Left
                             $LeftDist = [Math]::Abs($newLoc.X - $Snap.X)
-                            if ($LeftDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                            if ($LeftDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
                                 if (-not $ClosestSnaps.Left -or $LeftDist -lt $ClosestSnaps.Left[1]) {
                                     $ClosestSnaps.Left = @($Snap, $LeftDist)
                                 }
@@ -674,7 +682,7 @@ $sbGUI = {
     
                             #Bottom
                             $BottomDist = [Math]::Abs($newLoc.Y + $newSize.Height - $Snap.Y)
-                            if ($BottomDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                            if ($BottomDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_BLeft', 'btn_MBottom', 'btn_BRight') {
                                 if (-not $ClosestSnaps.Bottom -or $BottomDist -lt $ClosestSnaps.Bottom[1]) {
                                     $ClosestSnaps.Bottom = @($Snap, $BottomDist)
                                 }
@@ -682,11 +690,31 @@ $sbGUI = {
     
                             #Top
                             $TopDist = [Math]::Abs($newLoc.Y - $Snap.Y)
-                            if ($TopDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll','btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                            if ($TopDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_TLeft', 'btn_MTop', 'btn_TRight') {
                                 if (-not $ClosestSnaps.Top -or $TopDist -lt $ClosestSnaps.Top[1]) {
                                     $ClosestSnaps.Top = @($Snap, $TopDist)
                                 }
                             }
+    
+                            #CenterV
+                            $CenterVDist = [Math]::Abs(($newLoc.Y + $newSize.Height / 2) - $Snap.Y)
+                            if ($CenterVDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_TLeft', 'btn_MTop', 'btn_TRight', 'btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                                if (-not $ClosestSnaps.CenterV -or $CenterVDist -lt $ClosestSnaps.CenterV[1]) {
+                                    $ClosestSnaps.CenterV = @($Snap, $CenterVDist)
+                                }
+                            }
+    
+                            #CenterH
+                            $CenterHDist = [Math]::Abs(($newLoc.X + $newSize.Width / 2) - $Snap.X)
+                            if ($CenterHDist -lt $snappingDistance -and $Object.sButtonName -in 'btn_SizeAll', 'btn_TLeft', 'btn_MLeft', 'btn_BLeft', 'btn_TRight', 'btn_MRight', 'btn_BRight') {
+                                if (-not $ClosestSnaps.CenterH -or $CenterHDist -lt $ClosestSnaps.CenterH[1]) {
+                                    $ClosestSnaps.CenterH = @($Snap, $CenterHDist)
+                                }
+                            }
+                        }
+                    )
+                    $ClosestSnaps.GetEnumerator().Where({ $_.Value }).ForEach({
+                            $Snapped.($_.Key) = $true
                         }
                     )
                     $ClosestSnaps.GetEnumerator().Where({ $_.Value }).ForEach({
@@ -694,68 +722,126 @@ $sbGUI = {
     
                             switch ($_.Key) {
                                 Right {
-                                # Snap Right
-                                $Snapped.Right = $true
-                                if ($Object.sButtonName -eq 'btn_SizeAll') {
-                                $newLoc.X = $Snap.X - $newSize.Width
-                                } else {
-                                    $newSize.Width = $Snap.X - $newLoc.X
-                                }
+                                    # Snap Right
+                                    # $Snapped.Right = $true
+                                    if ($Object.sButtonName -eq 'btn_SizeAll') {
+                                        $newLoc.X = $Snap.X - $newSize.Width
+                                    } else {
+                                        $newSize.Width = $Snap.X - $newLoc.X
+                                    }
                                     $snapLines['snap_Right'].Visible = $true
                                     $snapLines['snap_Right'].Location = New-Object System.Drawing.Point(($Snap.X + [Math]::Abs($clientForm.X - $clientParent.X)), [Math]::Abs($clientForm.Y - $clientParent.Y))
                                     $snapLines['snap_Right'].Size = New-Object System.Drawing.Size(1, $refFID.ClientSize.Height)
                                     $snapLines['snap_Right'].BringToFront()
                                     $snapLines['snap_Right'].Invalidate()
-                            }
-                                Left {
-                                # Snap Left
-                                $newLoc.X = $Snap.X
-                                $Snapped.Left = $true
-                                if ($Object.sButtonName -ne 'btn_SizeAll') {
-                                    if ($Snapped.Right) {
-                                        $newSize.Width = $sRect.Left + $newSize.Width - $newLoc.X
-                                    } else {
-                                    $newSize.Width = $sRect.Right - $newLoc.X
                                 }
-                            }
+                                Left {
+                                    # Snap Left
+                                    $newLoc.X = $Snap.X
+                                    # $Snapped.Left = $true
+                                    if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                        if ($Snapped.Right) {
+                                            $newSize.Width = $sRect.Left + $newSize.Width - $newLoc.X
+                                        } else {
+                                            $newSize.Width = $sRect.Right - $newLoc.X
+                                        }
+                                    }
                                     $snapLines['snap_Left'].Visible = $true
                                     $snapLines['snap_Left'].Location = New-Object System.Drawing.Point(($Snap.X + [Math]::Abs($clientForm.X - $clientParent.X)), [Math]::Abs($clientForm.Y - $clientParent.Y))
                                     $snapLines['snap_Left'].Size = New-Object System.Drawing.Size(1, $refFID.ClientSize.Height)
                                     $snapLines['snap_Left'].BringToFront()
                                     $snapLines['snap_Left'].Invalidate()
-                        }
-                                Bottom {
-                                # Snap Bottom
-                                $Snapped.Bottom = $true
-                                if ($Object.sButtonName -eq 'btn_SizeAll') {
-                                $newLoc.Y = $Snap.Y - $newSize.Height
-                                } else {
-                                    $newSize.Height = $Snap.Y - $newLoc.Y
                                 }
+                                Bottom {
+                                    # Snap Bottom
+                                    # $Snapped.Bottom = $true
+                                    if ($Object.sButtonName -eq 'btn_SizeAll') {
+                                        $newLoc.Y = $Snap.Y - $newSize.Height
+                                    } else {
+                                        $newSize.Height = $Snap.Y - $newLoc.Y
+                                    }
                                     $snapLines['snap_Bottom'].Visible = $true
                                     $snapLines['snap_Bottom'].Location = New-Object System.Drawing.Point([Math]::Abs($clientForm.X - $clientParent.X), ($Snap.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
                                     $snapLines['snap_Bottom'].Size = New-Object System.Drawing.Size($refFID.ClientSize.Width, 1)
                                     $snapLines['snap_Bottom'].BringToFront()
                                     $snapLines['snap_Bottom'].Invalidate()
-                            }
-                                Top {
-                                # Snap Top
-                                $newLoc.Y = $Snap.Y
-                                $Snapped.Top = $true
-                                if ($Object.sButtonName -ne 'btn_SizeAll') {
-                                    if ($Snapped.Bottom) {
-                                        $newSize.Height = $sRect.Top + $newSize.Height - $newLoc.Y
-                                    } else {
-                                    $newSize.Height = $sRect.Bottom - $newLoc.Y
-                                    }
                                 }
+                                Top {
+                                    # Snap Top
+                                    $newLoc.Y = $Snap.Y
+                                    # $Snapped.Top = $true
+                                    if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                        if ($Snapped.Bottom) {
+                                            $newSize.Height = $sRect.Top + $newSize.Height - $newLoc.Y
+                                        } else {
+                                            $newSize.Height = $sRect.Bottom - $newLoc.Y
+                                        }
+                                    }
                                     $snapLines['snap_Top'].Visible = $true
                                     $snapLines['snap_Top'].Location = New-Object System.Drawing.Point([Math]::Abs($clientForm.X - $clientParent.X), ($Snap.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
                                     $snapLines['snap_Top'].Size = New-Object System.Drawing.Size($refFID.ClientSize.Width, 1)
                                     $snapLines['snap_Top'].BringToFront()
                                     $snapLines['snap_Top'].Invalidate()
+                                }
+                                CenterV {
+                                    # Snap Center Vertically
+                                    if ($Snapped.Top -and $Snapped.Bottom) {
+                                        # Do not move to snap if top and bottom are already snapped
+                                    } else {
+                                        # $Snapped.CenterV = $true
+                                        if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                            if (-not $Snapped.Top -and $Object.sButtonName -in 'btn_TLeft', 'btn_MTop', 'btn_TRight') {
+                                                $newSize.Height = ($sRect.Bottom - $Snap.Y) * 2
+                                                $newLoc.Y = $sRect.Bottom - $newSize.Height
+                                            } elseif (-not $Snapped.Bottom -and $Object.sButtonName -in 'btn_BLeft', 'btn_MBottom', 'btn_BRight') {
+                                                $newSize.Height = ($Snap.Y - $sRect.Top) * 2
+                                            } else {
+                                                $Snapped.CenterV = $false
+                                            }
+                                        } else {
+                                            $newLoc.Y = $Snap.Y - $newSize.Height / 2
+                                        } 
+
+                                        if ($Snapped.CenterV) {
+                                            # Only show snap line if we are still snapping after the above checks
+                                            $snapLines['snap_CenterV'].Visible = $true
+                                            $snapLines['snap_CenterV'].Location = New-Object System.Drawing.Point([Math]::Abs($clientForm.X - $clientParent.X), ($Snap.Y + [Math]::Abs($clientForm.Y - $clientParent.Y)))
+                                            $snapLines['snap_CenterV'].Size = New-Object System.Drawing.Size($refFID.ClientSize.Width, 1)
+                                            $snapLines['snap_CenterV'].BringToFront()
+                                            $snapLines['snap_CenterV'].Invalidate()
+                                        }
+                                    }
+                                }
+                                CenterH {
+                                    # Snap Center Horizontally
+                                    if ($Snapped.Left -and $Snapped.Right) {
+                                        # Do not move to snap if left and right are already snapped
+                                    } else {
+                                        # $Snapped.CenterH = $true
+                                        if ($Object.sButtonName -ne 'btn_SizeAll') {
+                                            if (-not $Snapped.Left -and $Object.sButtonName -in 'btn_TLeft', 'btn_MLeft', 'btn_BLeft') {
+                                                $newSize.Width = ($sRect.Right - $Snap.X) * 2
+                                                $newLoc.X = $sRect.Right - $newSize.Width
+                                            } elseif (-not $Snapped.Right -and $Object.sButtonName -in 'btn_TRight', 'btn_MRight', 'btn_BRight') {
+                                                $newSize.Width = ($Snap.X - $sRect.Left) * 2
+                                            } else {
+                                                $Snapped.CenterH = $false
+                                            }
+                                        } else {
+                                            $newLoc.X = $Snap.X - $newSize.Width / 2
+                                        }
+
+                                        if ($Snapped.CenterH) {
+                                            # Only show snap line if we are still snapping after the above checks
+                                            $snapLines['snap_CenterH'].Visible = $true
+                                            $snapLines['snap_CenterH'].Location = New-Object System.Drawing.Point(($Snap.X + [Math]::Abs($clientForm.X - $clientParent.X)), [Math]::Abs($clientForm.Y - $clientParent.Y))
+                                            $snapLines['snap_CenterH'].Size = New-Object System.Drawing.Size(1, $refFID.ClientSize.Height)
+                                            $snapLines['snap_CenterH'].BringToFront()
+                                            $snapLines['snap_CenterH'].Invalidate()
+                                        }
+                                    }
+                                }
                             }
-                        }
                         }
                     )
     
@@ -797,28 +883,28 @@ $sbGUI = {
                             if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                         }
                         btn_MLeft {
-                            if ( $newSize.Height -gt 28 ) {
+                            if ( $newSize.Height -gt 8 ) {
                                 $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X - 8), ($sButtonsLocation.Y + ($newSize.Height / 2) - 4))
                                 if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MRight {
-                            if ( $newSize.Height -gt 28 ) {
+                            if ( $newSize.Height -gt 8 ) {
                                 $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + $newSize.Width), ($sButtonsLocation.Y + ($newSize.Height / 2) - 4))
                                 if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MTop {
-                            if ( $newSize.Width -gt 40 ) {
+                            if ( $newSize.Width -gt 8 ) {
                                 $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + ($newSize.Width / 2) - 4), ($sButtonsLocation.Y - 8))
                                 if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
                             } else { $btn.Visible = $false }
                         }
                         btn_MBottom {
-                            if ( $newSize.Width -gt 40 ) {
+                            if ( $newSize.Width -gt 8 ) {
                                 $btn.Location = New-Object System.Drawing.Point(($sButtonsLocation.X + ($newSize.Width / 2) - 4), ($sButtonsLocation.Y + $newSize.Height))
                                 if ($InitialLocation) { $Script:sButtonsStartPos[$btn.Name] = $btn.Location }
                                 $btn.Visible = $true
@@ -827,8 +913,8 @@ $sbGUI = {
                     }
 
                     if ($btn.Name -ne 'btn_SizeAll') {
-                    $btn.BringToFront()
-                    $btn.Refresh()
+                        $btn.BringToFront()
+                        $btn.Refresh()
                     }
                 })
 
@@ -1141,7 +1227,7 @@ $sbGUI = {
                         })
                 } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form closure." }
             }
-            Load = {
+            Load        = {
                 try {
                     Read-AllSettings
                 } catch { Update-ErrorLog -ErrorRecord $_ -Message "Exception encountered during Form load." }
