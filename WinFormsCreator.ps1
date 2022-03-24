@@ -1563,15 +1563,6 @@ $sbGUI = {
 
                             $Script:templateText.Start_STAScriptBlock.ForEach({ $scriptText.Add($_) })
 
-                            # Functions
-                            $Script:templateText.StartRegion_Functions.ForEach({ $scriptText.Add($_) })
-
-                            $Script:templateText.Function_Update_ErrorLog.ForEach({ $scriptText.Add($_) })
-                            $Script:templateText.Function_ConvertFrom_WinFormsXML.ForEach({ $scriptText.Add($_) })
-                            if (( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) -or ( $xml.Data.ChildNodes.Count -gt 3 )) { $Script:templateText.Function_Get_CustomControl.ForEach({ $scriptText.Add($_) }) }
-
-                            $Script:templateText.EndRegion_Functions.ForEach({ $scriptText.Add($_) })
-
                             # Event Scriptblocks
                             if ( $($xml.Data.Events.ChildNodes | Where-Object { $_.Root -match "^Form" }) ) {
                                 $Script:templateText.StartRegion_Events.ForEach({ $scriptText.Add($_) })
@@ -1594,6 +1585,15 @@ $sbGUI = {
 
                                 $Script:templateText.EndRegion_Events.ForEach({ $scriptText.Add($_) })
                             }
+
+                            # Functions
+                            $Script:templateText.StartRegion_Functions.ForEach({ $scriptText.Add($_) })
+
+                            $Script:templateText.Function_Update_ErrorLog.ForEach({ $scriptText.Add($_) })
+                            $Script:templateText.Function_ConvertFrom_WinFormsXML.ForEach({ $scriptText.Add($_) })
+                            if (( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) -or ( $xml.Data.ChildNodes.Count -gt 3 )) { $Script:templateText.Function_Get_CustomControl.ForEach({ $scriptText.Add($_) }) }
+
+                            $Script:templateText.EndRegion_Functions.ForEach({ $scriptText.Add($_) })
                             
                             # Child Forms
                             if ( $Script:refsGenerate['gbx_ChildForms'].Controls.Count -gt 2 ) {
